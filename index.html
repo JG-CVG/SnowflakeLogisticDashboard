@@ -220,6 +220,11 @@
       <div class="sub">Podíl CA, kde jsme požádali prodejce o provedení CA · zelená = CA od prodejce, šedá = Standard Carvago · total bez „REJECT New CA" · dle CA New date · od 12/2025 · nejnovější vlevo · ověřeno = report</div>
       <div class="chartbox"><canvas id="suit"></canvas></div>
     </div>
+    <div class="card full">
+      <h2>🏷️ Price structure — completed CA from seller (% representation)<span class="srcb crm">☁ Salesforce</span></h2>
+      <div class="sub">CA se Status = „CarAudit Done" a vyplněným polem „Car inspection by Vendor" · měsíc dle CA New CarAudit Date · nejnovější vlevo · cenová pásma identická s „Cost structure DE" · n nad sloupcem = počet CA v měsíci · evidováno od 11/25 (dříve pole nebylo vyplněné)</div>
+      <div class="chartbox"><canvas id="pstruct"></canvas></div>
+    </div>
   </div>
 
   <footer>
@@ -794,6 +799,30 @@ const SUIT=[["12/25",300,943],["1/26",393,1131],["2/26",451,1135],["3/26",639,16
     plugins:[{id:'suitl',afterDatasetsDraw:function(c){var ctx=c.ctx,m0=c.getDatasetMeta(0).data,m1=c.getDatasetMeta(1).data;
       labs.forEach(function(_,j){if(fs[j]){var b=m0[j];ctx.save();ctx.font='600 10px sans-serif';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(fs[j],b.x,b.y+13);ctx.restore();}
         var top=m1[j];if(top){var pct=Math.round(fs[j]/tot[j]*100);ctx.save();ctx.textAlign='center';ctx.font='700 11px sans-serif';ctx.fillStyle='#e2e8f0';ctx.fillText(pct+' %',top.x,top.y-14);ctx.font='9px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],top.x,top.y-3);ctx.restore();}});}}]
+  });
+})();
+
+// ===== Price structure — completed CA from seller (% representation) =====  [label, free,p1_100,p100_120,p120_125,p125_145,p145plus]
+const PSTR=[["Lis 25",56,13,6,9,1,0],["Pro 25",74,19,10,17,0,0],["Led 26",89,17,23,32,0,0],["Úno 26",120,24,24,30,0,0],["Bře 26",152,27,23,31,0,0],["Dub 26",152,26,13,50,0,0],["Kvě 26",133,34,24,64,0,0],["Čvn 26",108,28,20,27,0,0]];
+(function(){
+  const B=[{label:'Free CarAudit',c:'#15803d'},{label:'1\u2013100 EUR',c:'#22c55e'},{label:'100\u2013120 EUR',c:'#06b6d4'},{label:'120\u2013125 EUR',c:'#eab308'},{label:'125\u2013145 EUR',c:'#f97316'},{label:'> 145 EUR',c:'#ef4444'}];
+  const rows=PSTR.slice().reverse();
+  const labs=rows.map(r=>r[0]);
+  const tot=rows.map(r=>r.slice(1).reduce((s,x)=>s+x,0));
+  const ds=B.map(function(b,bi){return {label:b.label,backgroundColor:b.c,stack:'s',borderWidth:0,
+    data:rows.map(function(r,j){return tot[j]?Math.round(r[bi+1]/tot[j]*1000)/10:0;}),
+    _cnt:rows.map(function(r){return r[bi+1];})};});
+  new Chart(document.getElementById('pstruct'),{type:'bar',
+    data:{labels:labs,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},
+      plugins:{legend:{labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
+        tooltip:{mode:'index',intersect:false,callbacks:{
+          label:function(it){var d=it.dataset;return d.label+': '+it.parsed.y+'% (n='+d._cnt[it.dataIndex]+')';},
+          footer:function(it){return 'Total n='+tot[it[0].dataIndex];}}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:9},maxRotation:60,minRotation:60}},
+        y:{stacked:true,max:100,grid:{color:'#334155'},ticks:{color:'#94a3b8',font:{size:10},callback:function(v){return v+'%';}}}}},
+    plugins:[{id:'pstrl',afterDatasetsDraw:function(c){var ctx=c.ctx,m=c.getDatasetMeta(5).data;
+      labs.forEach(function(_,j){var top=m[j];if(top){ctx.save();ctx.textAlign='center';ctx.font='9px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],top.x,top.y-4);ctx.restore();}});}}]
   });
 })();
 
