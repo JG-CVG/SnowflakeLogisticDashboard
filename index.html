@@ -222,7 +222,7 @@
     </div>
     <div class="card full">
       <h2>🏷️ Price structure — completed CA from seller (% representation)<span class="srcb crm">☁ Salesforce</span></h2>
-      <div class="sub">CA se Status = „CarAudit Done" a vyplněným polem „Car inspection by Vendor" · měsíc dle CA New CarAudit Date · nejnovější vlevo · cenová pásma identická s „Cost structure DE" · n nad sloupcem = počet CA v měsíci · evidováno od 11/25 (dříve pole nebylo vyplněné)</div>
+      <div class="sub">Pouze Carvago CA (bez Instamotion, bez Cebia) · bez customer country XK/AL · Status „CarAudit Done" + vyplněné „Car inspection by Vendor" · měsíc dle CA New CarAudit Date · nejnovější vlevo · cenová pásma jako „Cost structure DE" · n nad sloupcem = počet CA v měsíci · zdroj: Salesforce (live) · evidováno od 11/25</div>
       <div class="chartbox"><canvas id="pstruct"></canvas></div>
     </div>
   </div>
@@ -802,8 +802,8 @@ const SUIT=[["12/25",300,943],["1/26",393,1131],["2/26",451,1135],["3/26",639,16
   });
 })();
 
-// ===== Price structure — completed CA from seller (% representation) =====  [label, free,p1_100,p100_120,p120_125,p125_145,p145plus]
-const PSTR=[["Lis 25",56,13,6,9,1,0],["Pro 25",74,19,10,17,0,0],["Led 26",89,17,23,32,0,0],["Úno 26",120,24,24,30,0,0],["Bře 26",152,27,23,31,0,0],["Dub 26",152,26,13,50,0,0],["Kvě 26",133,34,24,64,0,0],["Čvn 26",115,31,24,32,0,0]];
+// ===== Price structure — completed CA from seller (% representation) =====  [label, free,p1_100,p100_120,p120_125,p125_145,p145plus]  SOURCE: Salesforce Case (Status=CarAudit Done) + CarAudit__r.Car_inspection_by_Vendor__c filled, Carvago only (Instamotion_Customer__c=false), Customer_Country_Origin__c NOT IN (XK,AL), month=CA_New_CarAudit_Date__c
+const PSTR=[["11/25",56,13,6,9,1,0],["12/25",74,19,10,17,0,0],["1/26",89,17,23,32,0,0],["2/26",120,24,24,30,0,0],["3/26",153,27,23,31,0,0],["4/26",151,26,13,50,0,0],["5/26",133,34,24,64,0,0],["6/26",115,31,24,32,0,0]];
 (function(){
   const B=[{label:'Free CarAudit',c:'#15803d'},{label:'1\u2013100 EUR',c:'#22c55e'},{label:'100\u2013120 EUR',c:'#06b6d4'},{label:'120\u2013125 EUR',c:'#eab308'},{label:'125\u2013145 EUR',c:'#f97316'},{label:'> 145 EUR',c:'#ef4444'}];
   const rows=PSTR.slice().reverse();
