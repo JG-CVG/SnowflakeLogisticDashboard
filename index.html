@@ -193,12 +193,7 @@
     <div class="card full" style="border-left:4px solid #ef4444">
       <h2>🔴 CarAudit Closed — Top 10 Reasons (Phase 2)<span class="srcb crm">☁ Salesforce</span></h2>
       <div class="sub">Phase 2 Closed only · auto-closed přemapováno na Order Sales LOST reason · dle CA New CarAudit Date</div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:space-around">
-        <div style="flex:1;min-width:230px"><div style="text-align:center;font-size:12px;color:#94a3b8;margin-bottom:4px">Tento měsíc (06/26)</div><div class="chartbox" style="height:230px"><canvas id="catop0"></canvas></div></div>
-        <div style="flex:1;min-width:230px"><div style="text-align:center;font-size:12px;color:#94a3b8;margin-bottom:4px">Letos (2026 YTD)</div><div class="chartbox" style="height:230px"><canvas id="catop1"></canvas></div></div>
-        <div style="flex:1;min-width:230px"><div style="text-align:center;font-size:12px;color:#94a3b8;margin-bottom:4px">Loni (2025)</div><div class="chartbox" style="height:230px"><canvas id="catop2"></canvas></div></div>
-      </div>
-      <div id="catop-legend" style="font-size:10px;color:#94a3b8;margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 14px"></div>
+      <div id="catop-tables" style="display:flex;gap:14px;flex-wrap:wrap"></div>
     </div>
     <div class="card full">
       <h2>✅ CA done — Recommended / Not recommended (weekly)<span class="srcb sf">❄ Snowflake</span></h2>
@@ -767,18 +762,39 @@ const CATOP=[
 (function(){
   const PAL=['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#3b82f6','#6366f1','#8b5cf6','#a855f7','#ec4899','#94a3b8'];
   const colOf={}; CATOP.forEach((r,i)=>colOf[r[0]]=PAL[i%PAL.length]);
-  const short=r=>r.length>46?r.slice(0,44)+'…':r;
-  [1,2,3].forEach((pi,k)=>{
-    const rows=CATOP.filter(r=>r[pi]>0).sort((a,b)=>b[pi]-a[pi]).slice(0,10);
-    new Chart(document.getElementById('catop'+k),{type:'doughnut',
-      data:{labels:rows.map(r=>r[0]),datasets:[{data:rows.map(r=>r[pi]),backgroundColor:rows.map(r=>colOf[r[0]]),borderColor:'#0f172a',borderWidth:1}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
-        plugins:{legend:{display:false},
-          tooltip:{callbacks:{label:function(it){var tot=it.dataset.data.reduce((s,v)=>s+v,0);return ' '+it.parsed+' ('+Math.round(it.parsed/tot*100)+'%)';},title:function(it){return short(it[0].label);}}}}}
+  const PERIODS=[{pi:1,t:'Tento měsíc',s:'06/26'},{pi:2,t:'Letos',s:'2026 YTD'},{pi:3,t:'Loni',s:'2025'}];
+  const esc=s=>s.replace(/"/g,'&quot;');
+  const bb='border-bottom:1px solid #19202c';
+  let H='';
+  PERIODS.forEach(p=>{
+    const totalAll=CATOP.reduce((s,r)=>s+r[p.pi],0);
+    const rows=CATOP.filter(r=>r[p.pi]>0).sort((a,b)=>b[p.pi]-a[p.pi]).slice(0,10);
+    const top10=rows.reduce((s,r)=>s+r[p.pi],0);
+    const maxP=Math.max.apply(null,rows.map(r=>r[p.pi]/totalAll*100));
+    H+='<div style="flex:1;min-width:330px;background:#0e141f;border:1px solid #222c3c;border-radius:10px;padding:12px 12px 8px">';
+    H+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><span style="font-weight:600;font-size:13px">'+p.t+'</span><span style="font-size:11px;color:#94a3b8">'+p.s+' · Σ '+totalAll.toLocaleString('cs')+'</span></div>';
+    H+='<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr>'
+      +'<th style="color:#94a3b8;text-align:left;padding:4px 6px;border-bottom:1px solid #222c3c;font-size:10px">#</th>'
+      +'<th style="color:#94a3b8;text-align:left;padding:4px 6px;border-bottom:1px solid #222c3c;font-size:10px">DŮVOD</th>'
+      +'<th style="color:#94a3b8;text-align:right;padding:4px 6px;border-bottom:1px solid #222c3c;font-size:10px">N</th>'
+      +'<th style="color:#94a3b8;text-align:right;padding:4px 6px;border-bottom:1px solid #222c3c;font-size:10px">%</th></tr></thead><tbody>';
+    rows.forEach((r,i)=>{
+      const pct=r[p.pi]/totalAll*100, c=colOf[r[0]];
+      const disp=r[0].length>52?r[0].slice(0,50)+'…':r[0];
+      H+='<tr>'
+        +'<td style="padding:5px 6px;'+bb+'"><span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;color:#0b0f17;font-weight:700;font-size:11px;background:'+c+'">'+(i+1)+'</span></td>'
+        +'<td style="padding:5px 6px;'+bb+';line-height:1.25" title="'+esc(r[0])+'">'+disp+'<div style="position:relative;height:5px;border-radius:3px;background:#1b2333;margin-top:3px;overflow:hidden"><div style="position:absolute;left:0;top:0;height:100%;border-radius:3px;width:'+(pct/maxP*100).toFixed(1)+'%;background:'+c+'"></div></div></td>'
+        +'<td style="padding:5px 6px;'+bb+';text-align:right;font-variant-numeric:tabular-nums">'+r[p.pi].toLocaleString('cs')+'</td>'
+        +'<td style="padding:5px 6px;'+bb+';text-align:right;font-weight:600;font-variant-numeric:tabular-nums">'+pct.toFixed(1)+'%</td>'
+        +'</tr>';
     });
+    H+='<tr><td style="border-top:1px solid #222c3c;padding-top:7px"></td>'
+      +'<td style="border-top:1px solid #222c3c;padding-top:7px;font-weight:700">Top 10 celkem</td>'
+      +'<td style="border-top:1px solid #222c3c;padding-top:7px;text-align:right;font-weight:700">'+top10.toLocaleString('cs')+'</td>'
+      +'<td style="border-top:1px solid #222c3c;padding-top:7px;text-align:right;font-weight:700">'+(top10/totalAll*100).toFixed(1)+'%</td></tr>';
+    H+='</tbody></table></div>';
   });
-  document.getElementById('catop-legend').innerHTML=CATOP.map(r=>
-    '<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:'+colOf[r[0]]+';display:inline-block"></span>'+short(r[0])+'</span>').join('');
+  document.getElementById('catop-tables').innerHTML=H;
 })();
 
 // ===== CA done — Recommended / Not recommended (weekly) =====  [wk, recommended, not_recommended]  GROUPED bar
