@@ -245,6 +245,11 @@
       <div class="sub">Stejná logika, po týdnech (ISO) · posledních 26 týdnů · nejnovější vlevo · zdroj: Snowflake (CaseHistory)</div>
       <div class="chartbox"><canvas id="audselW"></canvas></div>
     </div>
+    <div class="card full">
+      <h2>🛒 Carvago Purchasing — Active Purchases<span class="srcb crm">☁ Salesforce</span></h2>
+      <div class="sub">Probíhající nákupy vozů (Car Purchase) dle fáze × stáří · stáří = pracovní dny v aktuální fázi · bez Done/Closed · snapshot z CP reportu 22.06.2026 (CP date pole nejsou ve Snowflake extraktu)</div>
+      <div id="active-purchases"></div>
+    </div>
   </div>
 
   <footer>
@@ -1068,6 +1073,50 @@ const AUDSEL_WEEKLY_DATA=[{week:"2025-W01",label:"W01/25",year:2025,week_num:1,t
   }
   render('audselM', AUDSEL_MONTHLY_DATA, null);
   render('audselW', AUDSEL_WEEKLY_DATA, 26);
+})();
+</script>
+<script>
+(function(){
+  const BK=[["b02","≤2 dny","#22c55e"],["b23","2\u20133","#84cc16"],["b35","3\u20135","#eab308"],["b510","5\u201310","#f97316"],["b10","10+","#ef4444"]];
+  const ROWS=[
+    {status:"New",b02:11,b23:2,b35:0,b510:1,b10:0},
+    {status:"Dealer Contacted",b02:9,b23:2,b35:2,b510:0,b10:0},
+    {status:"Contract Preparation",b02:4,b23:1,b35:0,b510:0,b10:0},
+    {status:"Awaiting Approval",b02:0,b23:0,b35:0,b510:0,b10:0},
+    {status:"Contract Signature",b02:1,b23:0,b35:0,b510:0,b10:0},
+    {status:"Payment Processing",b02:7,b23:7,b35:22,b510:30,b10:4}
+  ];
+  const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';};
+  const rowTot=r=>BK.reduce((s,b)=>s+r[b[0]],0);
+  const grand=ROWS.reduce((s,r)=>s+rowTot(r),0);
+  const colTot={}; BK.forEach(b=>colTot[b[0]]=ROWS.reduce((s,r)=>s+r[b[0]],0));
+  const aging=ROWS.reduce((s,r)=>s+r.b510+r.b10,0), crit=colTot.b10;
+  const card=(v,l,c)=>'<div style="background:#0e141f;border:1px solid #222c3c;border-radius:10px;padding:10px 14px;min-width:120px"><div style="font-size:22px;font-weight:700'+(c?';color:'+c:'')+'">'+v+'</div><div style="font-size:11px;color:#8b97a8;margin-top:2px">'+l+'</div></div>';
+  let ab='',al='';
+  BK.forEach(b=>{const v=colTot[b[0]],w=(v/grand*100).toFixed(1);
+    ab+='<span title="'+b[1]+': '+v+'" style="width:'+w+'%;background:'+b[2]+'"></span>';
+    al+='<span style="margin-right:14px"><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'+b[2]+';margin-right:5px;vertical-align:-1px"></i>'+b[1]+' · '+v+' ('+w+'%)</span>';});
+  let H='<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">'
+    +card(grand,'Aktivních nákupů')+card(aging,'Stáří 5+ dnů','#f97316')+card(crit,'Kritické 10+ dnů','#ef4444')
+    +'<div style="flex:1;min-width:260px;background:#0e141f;border:1px solid #222c3c;border-radius:10px;padding:10px 14px">'
+    +'<div style="font-size:11px;color:#8b97a8;margin-bottom:4px">Rozložení dle stáří</div>'
+    +'<div style="display:flex;height:14px;border-radius:6px;overflow:hidden;margin:4px 0 6px">'+ab+'</div>'
+    +'<div style="font-size:11px;color:#8b97a8">'+al+'</div></div></div>';
+  H+='<table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>'
+    +'<th style="text-align:left;color:#8b97a8;padding:7px 10px;border-bottom:1px solid #222c3c;font-size:10.5px">FÁZE NÁKUPU</th>';
+  BK.forEach(b=>H+='<th style="text-align:right;color:#8b97a8;padding:7px 10px;border-bottom:1px solid #222c3c;font-size:10.5px">'+b[1]+'</th>');
+  H+='<th style="text-align:right;color:#8b97a8;padding:7px 10px;border-bottom:1px solid #222c3c;font-size:10.5px">CELKEM</th></tr></thead><tbody>';
+  ROWS.forEach(r=>{const tot=rowTot(r);
+    H+='<tr><td style="text-align:left;font-weight:600;padding:7px 10px;border-bottom:1px solid #19202c">'+r.status+'</td>';
+    BK.forEach(b=>{const v=r[b[0]];
+      if(v===0){H+='<td style="text-align:right;padding:7px 10px;border-bottom:1px solid #19202c;color:#475569">0</td>';return;}
+      const it=Math.min(0.85,0.12+v/tot*0.8);
+      H+='<td style="text-align:right;padding:7px 10px;border-bottom:1px solid #19202c"><span style="display:inline-block;min-width:26px;border-radius:6px;padding:2px 7px;font-weight:600;background:'+hexA(b[2],it)+';color:#0b0f17">'+v+'</span></td>';});
+    H+='<td style="text-align:right;font-weight:700;padding:7px 10px;border-bottom:1px solid #19202c">'+tot+'</td></tr>';});
+  H+='<tr><td style="text-align:left;font-weight:700;border-top:2px solid #222c3c;padding:9px 10px">Celkem</td>';
+  BK.forEach(b=>H+='<td style="text-align:right;font-weight:700;border-top:2px solid #222c3c;padding:9px 10px">'+colTot[b[0]]+'</td>');
+  H+='<td style="text-align:right;font-weight:700;border-top:2px solid #222c3c;padding:9px 10px">'+grand+'</td></tr></tbody></table>';
+  document.getElementById('active-purchases').innerHTML=H;
 })();
 </script>
 </body>
