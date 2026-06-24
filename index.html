@@ -864,7 +864,13 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
             footer:function(it){return 'Total n='+tot[it[0].dataIndex];}}}},
         scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:8},maxRotation:60,minRotation:60}},
           y:{stacked:true,max:100,grid:{color:'#334155'},ticks:{color:'#94a3b8',font:{size:10},callback:function(v){return v+'%';}}}}},
-      plugins:[{id:canvasId+'l',afterDatasetsDraw:function(c){var ctx=c.ctx,m=c.getDatasetMeta(5).data;
+      plugins:[{id:canvasId+'l',afterDatasetsDraw:function(c){var ctx=c.ctx;
+        c.data.datasets.forEach(function(d,di){var meta=c.getDatasetMeta(di);
+          meta.data.forEach(function(el,j){var v=d.data[j];if(!v||v<7)return;
+            var yc=(el.y+el.base)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+            ctx.font='bold 8px sans-serif';ctx.fillStyle=(di===3)?'#1e293b':'#fff';
+            ctx.fillText(v+'%',el.x,yc);ctx.restore();});});
+        var m=c.getDatasetMeta(5).data;
         labs.forEach(function(_,j){var t=m[j];if(t){ctx.save();ctx.textAlign='center';ctx.font='8px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],t.x,t.y-4);ctx.restore();}});}}]
     });
   }
