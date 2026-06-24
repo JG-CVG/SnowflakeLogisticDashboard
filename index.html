@@ -235,6 +235,11 @@
       <div class="sub">Stejná logika, pouze CA s Vendor Country = DE · posledních 26 týdnů · nejnovější vlevo · zdroj: Snowflake (CaseHistory)</div>
       <div class="chartbox"><canvas id="costDE"></canvas></div>
     </div>
+    <div class="card full">
+      <h2>⏱️ CA New → VIN Check (NET hod.)<span class="srcb sf">❄ Snowflake</span></h2>
+      <div class="sub">% rozdělení NET pracovních hodin (Po–Pá 8–17, So 8–13) od zahájení CarAuditu po dokončení 1. inspekce (VIN Check), vč. REJECT případů · měsíc dle CA New CarAudit Date (Europe/Prague) · nejnovější vlevo · 🥇🥈🥉 = celkově nejrychlejší měsíc (nejnižší ø NET doba) · zdroj: Snowflake (CaseHistory)</div>
+      <div class="chartbox"><canvas id="vinsla"></canvas></div>
+    </div>
   </div>
 
   <footer>
@@ -894,6 +899,43 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
     var d=document.createElement('div'); d.className='cardts '+(b.classList.contains('crm')?'crm':'sf');
     d.textContent='↻ '+(b.classList.contains('crm')?sfTs:snowTs);
     card.appendChild(d);
+  });
+})();
+</script>
+<script>
+const CA_SLA_VIN_DATA=[{label:"1/24",total:1564,b2:892,b4:292,b6:150,b12:137,b24:53,b48:29,b48plus:11,avgh:3.76},{label:"2/24",total:692,b2:380,b4:145,b6:50,b12:68,b24:34,b48:10,b48plus:5,avgh:3.95},{label:"3/24",total:1353,b2:727,b4:246,b6:100,b12:147,b24:82,b48:42,b48plus:9,avgh:4.64},{label:"4/24",total:1421,b2:793,b4:283,b6:123,b12:128,b24:61,b48:22,b48plus:11,avgh:6.45},{label:"5/24",total:1629,b2:809,b4:316,b6:145,b12:206,b24:104,b48:39,b48plus:10,avgh:4.66},{label:"6/24",total:1241,b2:687,b4:258,b6:111,b12:114,b24:39,b48:26,b48plus:6,avgh:3.66},{label:"7/24",total:1168,b2:700,b4:220,b6:73,b12:93,b24:46,b48:30,b48plus:6,avgh:3.69},{label:"8/24",total:1004,b2:631,b4:148,b6:67,b12:94,b24:42,b48:15,b48plus:7,avgh:3.79},{label:"9/24",total:1266,b2:700,b4:255,b6:106,b12:131,b24:54,b48:15,b48plus:5,avgh:3.45},{label:"10/24",total:1306,b2:650,b4:276,b6:132,b12:132,b24:78,b48:31,b48plus:7,avgh:4.8},{label:"11/24",total:1131,b2:691,b4:215,b6:81,b12:95,b24:36,b48:12,b48plus:1,avgh:2.85},{label:"12/24",total:898,b2:498,b4:170,b6:44,b12:86,b24:49,b48:36,b48plus:15,avgh:5.4},{label:"1/25",total:1075,b2:628,b4:216,b6:62,b12:105,b24:46,b48:14,b48plus:4,avgh:3.42},{label:"2/25",total:1034,b2:642,b4:212,b6:73,b12:74,b24:22,b48:10,b48plus:1,avgh:2.74},{label:"3/25",total:1158,b2:749,b4:214,b6:78,b12:73,b24:31,b48:13,b48plus:0,avgh:2.62},{label:"4/25",total:1126,b2:632,b4:183,b6:67,b12:132,b24:76,b48:27,b48plus:9,avgh:4.75},{label:"5/25",total:1186,b2:709,b4:195,b6:77,b12:126,b24:52,b48:22,b48plus:5,avgh:3.59},{label:"6/25",total:1336,b2:753,b4:220,b6:75,b12:155,b24:107,b48:23,b48plus:3,avgh:4.21},{label:"7/25",total:1302,b2:652,b4:240,b6:123,b12:152,b24:89,b48:35,b48plus:11,avgh:5.03},{label:"8/25",total:1312,b2:638,b4:272,b6:110,b12:143,b24:107,b48:36,b48plus:6,avgh:4.84},{label:"9/25",total:1500,b2:779,b4:288,b6:141,b12:174,b24:89,b48:27,b48plus:2,avgh:3.91},{label:"10/25",total:1506,b2:766,b4:357,b6:161,b12:151,b24:62,b48:9,b48plus:0,avgh:3.23},{label:"11/25",total:1414,b2:745,b4:324,b6:151,b12:147,b24:39,b48:7,b48plus:1,avgh:3.0},{label:"12/25",total:943,b2:635,b4:151,b6:47,b12:60,b24:12,b48:27,b48plus:11,avgh:3.52},{label:"1/26",total:1132,b2:674,b4:229,b6:116,b12:89,b24:23,b48:1,b48plus:0,avgh:2.49},{label:"2/26",total:1138,b2:723,b4:243,b6:97,b12:62,b24:10,b48:2,b48plus:1,avgh:2.11},{label:"3/26",total:1698,b2:1071,b4:327,b6:165,b12:118,b24:15,b48:2,b48plus:0,avgh:2.15},{label:"4/26",total:1999,b2:1222,b4:348,b6:209,b12:145,b24:61,b48:14,b48plus:0,avgh:2.69},{label:"5/26",total:1949,b2:1136,b4:309,b6:196,b12:201,b24:96,b48:11,b48plus:0,avgh:3.12},{label:"6/26",total:1244,b2:729,b4:218,b6:101,b12:142,b24:43,b48:11,b48plus:0,avgh:3.07}];
+(function(){
+  const BK=[["b2","≤2 h","#22c55e"],["b4","≤4 h","#84cc16"],["b6","≤6 h","#06b6d4"],["b12","≤12 h","#eab308"],["b24","≤24 h","#f59e0b"],["b48","≤48 h","#f97316"],["b48plus","> 48 h","#ef4444"]];
+  const rows=CA_SLA_VIN_DATA.slice().reverse(); // nejnovější vlevo
+  const labs=rows.map(function(r){return r.label;});
+  const tot=rows.map(function(r){return r.total;});
+  const avg=rows.map(function(r){return r.avgh;});
+  // medaile: 3 nejnižší ø NET
+  const medal={}, ms=["🥇","🥈","🥉"];
+  avg.map(function(v,i){return [v,i];}).filter(function(o){return o[0]!=null && tot[o[1]]>0;})
+     .sort(function(a,b){return a[0]-b[0];}).slice(0,3).forEach(function(o,r){medal[o[1]]=ms[r];});
+  const ds=BK.map(function(b,bi){return {label:b[1],backgroundColor:b[2],stack:'s',borderWidth:0,
+    data:rows.map(function(r,j){return tot[j]?Math.round(r[b[0]]/tot[j]*1000)/10:0;}),
+    _cnt:rows.map(function(r){return r[b[0]];})};});
+  new Chart(document.getElementById('vinsla'),{type:'bar',
+    data:{labels:labs,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
+      plugins:{legend:{labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
+        tooltip:{mode:'index',intersect:false,callbacks:{
+          label:function(it){var d=it.dataset;return d.label+': '+it.parsed.y+'% (n='+d._cnt[it.dataIndex]+')';},
+          footer:function(it){var j=it[0].dataIndex;return 'Total n='+tot[j]+'  •  ø '+avg[j].toFixed(2)+' h NET';}}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:9},maxRotation:60,minRotation:60}},
+        y:{stacked:true,max:100,grid:{color:'#334155'},ticks:{color:'#94a3b8',font:{size:10},callback:function(v){return v+'%';}}}}},
+    plugins:[{id:'vinslal',afterDatasetsDraw:function(c){var ctx=c.ctx;
+      c.data.datasets.forEach(function(d,di){var meta=c.getDatasetMeta(di);
+        meta.data.forEach(function(el,j){var v=d.data[j];if(!v||v<7)return;
+          var yc=(el.y+el.base)/2;ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.font='bold 8px sans-serif';ctx.fillStyle=(di===3)?'#1e293b':'#fff';
+          ctx.fillText(v+'%',el.x,yc);ctx.restore();});});
+      var m=c.getDatasetMeta(6).data;
+      labs.forEach(function(_,j){var t=m[j];if(!t)return;ctx.save();ctx.textAlign='center';
+        ctx.font='8px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],t.x,t.y-4);
+        if(medal[j]){ctx.font='13px sans-serif';ctx.fillText(medal[j],t.x,t.y-15);}ctx.restore();});}}]
   });
 })();
 </script>
