@@ -864,8 +864,9 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
     const tot=rows.map(function(r){return KEYS.reduce(function(s,k){return s+r[k];},0);});
     var MID=[0,50,110,122.5,135,160];
     var avg=rows.map(function(r){var t=KEYS.reduce(function(s,k){return s+r[k];},0);return t?KEYS.reduce(function(s,k,ki){return s+r[k]*MID[ki];},0)/t:null;});
+    var _s=tot.slice().sort(function(a,b){return a-b;}),_med=_s.length?_s[Math.floor(_s.length/2)]:0,_fl=_med*0.6;
     var medal={},MS=["🥇","🥈","🥉"];
-    avg.map(function(v,i){return [v,i];}).filter(function(o){return o[0]!=null&&tot[o[1]]>0;}).sort(function(a,b){return a[0]-b[0];}).slice(0,3).forEach(function(o,r){medal[o[1]]=MS[r];});
+    avg.map(function(v,i){return [v,i];}).filter(function(o){return o[0]!=null&&tot[o[1]]>=_fl;}).sort(function(a,b){return a[0]-b[0];}).slice(0,3).forEach(function(o,r){medal[o[1]]=MS[r];});
     const ds=B.map(function(b,bi){return {label:b.label,backgroundColor:b.c,stack:'s',borderWidth:0,
       data:rows.map(function(r,j){return tot[j]?Math.round(r[KEYS[bi]]/tot[j]*1000)/10:0;}),
       _cnt:rows.map(function(r){return r[KEYS[bi]];})};});
@@ -920,8 +921,9 @@ const CA_SLA_VIN_DATA=[{label:"1/24",total:1564,b2:892,b4:292,b6:150,b12:137,b24
   const tot=rows.map(function(r){return r.total;});
   const avg=rows.map(function(r){return r.avgh;});
   // medaile: 3 nejnižší ø NET
+  var _s=tot.slice().sort(function(a,b){return a-b;}),_med=_s.length?_s[Math.floor(_s.length/2)]:0,_fl=_med*0.6;
   const medal={}, ms=["🥇","🥈","🥉"];
-  avg.map(function(v,i){return [v,i];}).filter(function(o){return o[0]!=null && tot[o[1]]>0;})
+  avg.map(function(v,i){return [v,i];}).filter(function(o){return o[0]!=null && tot[o[1]]>=_fl;})
      .sort(function(a,b){return a[0]-b[0];}).slice(0,3).forEach(function(o,r){medal[o[1]]=ms[r];});
   const ds=BK.map(function(b,bi){return {label:b[1],backgroundColor:b[2],stack:'s',borderWidth:0,
     data:rows.map(function(r,j){return tot[j]?Math.round(r[b[0]]/tot[j]*1000)/10:0;}),
@@ -957,8 +959,9 @@ const CA_SLA_VIN_WEEKLY_DATA=[{week:"2024-W01",label:"W01/24",year:2024,week_num
   const labs=rows.map(function(r){return r.label;});
   const tot=rows.map(function(r){return r.total;});
   const avg=rows.map(function(r){return r.avgh;});
+  var _s=tot.slice().sort(function(a,b){return a-b;}),_med=_s.length?_s[Math.floor(_s.length/2)]:0,_fl=_med*0.6;
   const medal={}, ms=["🥇","🥈","🥉"];
-  avg.map(function(v,i){return [v,i];}).filter(function(o){return o[0]!=null && tot[o[1]]>0;})
+  avg.map(function(v,i){return [v,i];}).filter(function(o){return o[0]!=null && tot[o[1]]>=_fl;})
      .sort(function(a,b){return a[0]-b[0];}).slice(0,3).forEach(function(o,r){medal[o[1]]=ms[r];});
   const ds=BK.map(function(b){return {label:b[1],backgroundColor:b[2],stack:'s',borderWidth:0,
     data:rows.map(function(r,j){return tot[j]?Math.round(r[b[0]]/tot[j]*1000)/10:0;}),
