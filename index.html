@@ -924,8 +924,8 @@ const CA_SLA_VIN_DATA=[{label:"1/24",total:1564,b2:892,b4:292,b6:150,b12:137,b24
     _cnt:rows.map(function(r){return r[b[0]];})};});
   new Chart(document.getElementById('vinsla'),{type:'bar',
     data:{labels:labs,datasets:ds},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
-      plugins:{legend:{labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:46}},
+      plugins:{legend:{position:'bottom',labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
         tooltip:{mode:'index',intersect:false,callbacks:{
           label:function(it){var d=it.dataset;return d.label+': '+it.parsed.y+'% (n='+d._cnt[it.dataIndex]+')';},
           footer:function(it){var j=it[0].dataIndex;return 'Total n='+tot[j]+'  •  ø '+avg[j].toFixed(2)+' h NET';}}}},
@@ -939,8 +939,8 @@ const CA_SLA_VIN_DATA=[{label:"1/24",total:1564,b2:892,b4:292,b6:150,b12:137,b24
           ctx.fillText(v+'%',el.x,yc);ctx.restore();});});
       var m=c.getDatasetMeta(6).data;
       labs.forEach(function(_,j){var t=m[j];if(!t)return;ctx.save();ctx.textAlign='center';
-        ctx.font='8px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],t.x,t.y-4);
-        if(medal[j]){ctx.font='13px sans-serif';ctx.fillText(medal[j],t.x,t.y-15);}ctx.restore();});}}]
+        ctx.font='8px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],t.x,t.y-6);
+        if(medal[j]){ctx.font='18px sans-serif';ctx.fillText(medal[j],t.x,t.y-22);}ctx.restore();});}}]
   });
 })();
 </script>
@@ -961,8 +961,8 @@ const CA_SLA_VIN_WEEKLY_DATA=[{week:"2024-W01",label:"W01/24",year:2024,week_num
     _cnt:rows.map(function(r){return r[b[0]];})};});
   new Chart(document.getElementById('vinslaW'),{type:'bar',
     data:{labels:labs,datasets:ds},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
-      plugins:{legend:{labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:46}},
+      plugins:{legend:{position:'bottom',labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
         tooltip:{mode:'index',intersect:false,callbacks:{
           label:function(it){var d=it.dataset;return d.label+': '+it.parsed.y+'% (n='+d._cnt[it.dataIndex]+')';},
           footer:function(it){var j=it[0].dataIndex;return 'Total n='+tot[j]+'  •  ø '+avg[j].toFixed(2)+' h NET';}}}},
@@ -976,8 +976,8 @@ const CA_SLA_VIN_WEEKLY_DATA=[{week:"2024-W01",label:"W01/24",year:2024,week_num
           ctx.fillText(v+'%',el.x,yc);ctx.restore();});});
       var m=c.getDatasetMeta(6).data;
       labs.forEach(function(_,j){var t=m[j];if(!t)return;ctx.save();ctx.textAlign='center';
-        ctx.font='8px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],t.x,t.y-4);
-        if(medal[j]){ctx.font='13px sans-serif';ctx.fillText(medal[j],t.x,t.y-15);}ctx.restore();});}}]
+        ctx.font='8px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],t.x,t.y-6);
+        if(medal[j]){ctx.font='18px sans-serif';ctx.fillText(medal[j],t.x,t.y-22);}ctx.restore();});}}]
   });
 })();
 </script>
