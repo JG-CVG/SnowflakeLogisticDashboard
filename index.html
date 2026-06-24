@@ -862,16 +862,20 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
     const rows=DATA.slice(-weeks).reverse();
     const labs=rows.map(function(r){return r.label;});
     const tot=rows.map(function(r){return KEYS.reduce(function(s,k){return s+r[k];},0);});
+    var MID=[0,50,110,122.5,135,160];
+    var avg=rows.map(function(r){var t=KEYS.reduce(function(s,k){return s+r[k];},0);return t?KEYS.reduce(function(s,k,ki){return s+r[k]*MID[ki];},0)/t:null;});
+    var medal={},MS=["🥇","🥈","🥉"];
+    avg.map(function(v,i){return [v,i];}).filter(function(o){return o[0]!=null&&tot[o[1]]>0;}).sort(function(a,b){return a[0]-b[0];}).slice(0,3).forEach(function(o,r){medal[o[1]]=MS[r];});
     const ds=B.map(function(b,bi){return {label:b.label,backgroundColor:b.c,stack:'s',borderWidth:0,
       data:rows.map(function(r,j){return tot[j]?Math.round(r[KEYS[bi]]/tot[j]*1000)/10:0;}),
       _cnt:rows.map(function(r){return r[KEYS[bi]];})};});
     new Chart(document.getElementById(canvasId),{type:'bar',
       data:{labels:labs,datasets:ds},
-      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},
-        plugins:{legend:{labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
+      options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:40}},
+        plugins:{legend:{position:'bottom',labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
           tooltip:{mode:'index',intersect:false,callbacks:{
             label:function(it){var d=it.dataset;return d.label+': '+it.parsed.y+'% (n='+d._cnt[it.dataIndex]+')';},
-            footer:function(it){return 'Total n='+tot[it[0].dataIndex];}}}},
+            footer:function(it){var j=it[0].dataIndex;return 'Total n='+tot[j]+(avg[j]!=null?'  •  ø '+Math.round(avg[j])+' €':'');}}}},
         scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:8},maxRotation:60,minRotation:60}},
           y:{stacked:true,max:100,grid:{color:'#334155'},ticks:{color:'#94a3b8',font:{size:10},callback:function(v){return v+'%';}}}}},
       plugins:[{id:canvasId+'l',afterDatasetsDraw:function(c){var ctx=c.ctx;
@@ -881,7 +885,7 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
             ctx.font='bold 8px sans-serif';ctx.fillStyle=(di===3)?'#1e293b':'#fff';
             ctx.fillText(v+'%',el.x,yc);ctx.restore();});});
         var m=c.getDatasetMeta(5).data;
-        labs.forEach(function(_,j){var t=m[j];if(t){ctx.save();ctx.textAlign='center';ctx.font='8px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],t.x,t.y-4);ctx.restore();}});}}]
+        labs.forEach(function(_,j){var t=m[j];if(t){ctx.save();ctx.textAlign='center';ctx.font='8px sans-serif';ctx.fillStyle='#94a3b8';ctx.fillText('n='+tot[j],t.x,t.y-4);if(medal[j]){ctx.font='15px sans-serif';ctx.fillText(medal[j],t.x,t.y-16);}ctx.restore();}});}}]
     });
   }
   render('cost',CA_WEEKLY_COST_DATA,26);
