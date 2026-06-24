@@ -334,7 +334,7 @@ function mk(cv,paidI,accI,lostI,pred,startYm){
       {label:'Predikce (zbytek)',data:ghost,backgroundColor:'rgba(167,139,250,.45)',
        borderColor:'#a78bfa',borderWidth:{top:1,left:1,right:1,bottom:0},borderDash:[4,3],borderRadius:3,stack:'s'},
     ]},
-    options:{responsive:true,maintainAspectRatio:false,
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:30}},
       plugins:{
         legend:{labels:{color:'#cbd5e1',boxWidth:12,font:{size:11}}},
         tooltip:{mode:'index',intersect:false,callbacks:{
@@ -363,7 +363,7 @@ function mk(cv,paidI,accI,lostI,pred,startYm){
         // 🏆 rekord
         const bm=c.getDatasetMeta(0).data[recRev];
         if(bm){let top=bm.y;[0,1,2].forEach(d=>{const m=c.getDatasetMeta(d).data[recRev];if(m&&m.y<top)top=m.y;});
-          ctx.save();ctx.font='15px serif';ctx.textAlign='center';ctx.fillText('🏆',bm.x,top-6);ctx.restore();}
+          ctx.save();ctx.font='18px serif';ctx.textAlign='center';ctx.fillText('🏆',bm.x,top-22);ctx.restore();}
         // predikce whisker na probíhajícím měsíci (index 0)
         const b0=c.getDatasetMeta(0).data[0]; if(!b0)return;
         const base=lostArr[0]; // lost se přičítá pod ghost
