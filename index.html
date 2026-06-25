@@ -297,6 +297,44 @@
         </div>
       </div>
     </div>
+    <div class="card full" style="position:relative">
+      <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <span>🔧 Pracnost — CarAudity na 1 prodané auto<span class="srcb sf">❄ Snowflake</span></span>
+        <button id="caInfoBtn" aria-label="Jak se graf počítá" title="Jak se graf počítá" style="flex:none;width:24px;height:24px;border-radius:50%;border:1px solid #38bdf8;background:rgba(56,189,248,.12);color:#7dd3fc;cursor:pointer;font-size:13px;font-weight:700;font-style:italic;line-height:1">i</button>
+      </h2>
+      <div class="sub">Kolik fyzických auditů (Phase 2) připadá na 1 prodané auto (Contract Paid) · měsíčně · nejnovější vlevo · klikni na „i" pro popis</div>
+      <div class="kpis" id="ca-kpi"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin:2px 0 6px;font-size:11px;color:#94a3b8">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:3px;background:#fbbf24;display:inline-block"></span>Dokončené CA / prodej</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:0;border-top:2px dashed #94a3b8;display:inline-block"></span>Do Phase 2 / prodej</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#38bdf8;display:inline-block"></span>Dokončené CarAudity</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Prodaná auta</span>
+      </div>
+      <div class="chartbox" style="height:320px"><canvas id="caps"></canvas></div>
+      <div style="font-size:10px;color:#64748b;margin-top:8px">První sloupec (nejnovější) = neúplný probíhající měsíc. Zdroj ❄ Snowflake (Case + Order). CA zařazen dle data vzniku.</div>
+      <div id="caModal" style="display:none;position:absolute;inset:0;background:rgba(2,6,23,.72);border-radius:16px;align-items:center;justify-content:center;padding:18px;z-index:30">
+        <div role="dialog" aria-label="Jak se graf počítá" style="background:#1e293b;border:1px solid #38506e;border-radius:14px;max-width:560px;max-height:100%;overflow:auto;padding:20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.5)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px">
+            <div style="font-size:16px;font-weight:700;color:#e2e8f0">Jak se graf počítá</div>
+            <button id="caClose" aria-label="Zavřít" style="width:28px;height:28px;border-radius:8px;border:1px solid #334155;background:#162033;color:#94a3b8;cursor:pointer;font-size:15px;line-height:1">✕</button>
+          </div>
+          <div style="font-size:13px;line-height:1.65;color:#cbd5e1">
+            <p style="margin:0 0 12px"><b style="color:#e2e8f0">Co měří:</b> kolik <b>fyzických auditů vozu</b> (drahá Phase 2 — technik prohlíží auto) padne na jeden prodej. Na rozdíl od 1st callu (levný telefonát) jde o nákladnou část nálevky.</p>
+            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Čitatel — CarAudity</p>
+            <p style="margin:0 0 6px">Carvago CarAudit case (RecordType CarAudit + Carvago CarAudit, bez Cebia, bez Instamotion), dle měsíce vzniku. Dvě úrovně:</p>
+            <ul style="margin:0 0 12px;padding-left:18px">
+              <li><b style="color:#fbbf24">Dokončené CA</b> = Status „CarAudit Done" (audit reálně proběhl) — hlavní čára.</li>
+              <li><b style="color:#94a3b8">Do Phase 2</b> = CA, které prošly 1st callem a vstoupily do auditní fáze (Auditor Selection a dál) — šedá čára.</li>
+            </ul>
+            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Jmenovatel — prodaná auta</p>
+            <p style="margin:0 0 12px">Carvago Contract Paid: má Contract Accepted i Paid, není Lost/CWA, není Instamotion, bez XK/AL, bez test orderů. Měsíc = Contract Paid Date.</p>
+            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Poměr</p>
+            <p style="margin:0 0 12px">Počet CarAuditů v měsíci ÷ počet prodaných aut v měsíci. Lze přepočítat na € (× průměrná cena CA = náklad auditů na prodané auto).</p>
+            <p style="margin:0;color:#64748b;font-size:12px">Časová osa rok-měsíc, nejnovější vlevo. Poslední sloupec neúplný. Zdroj: Snowflake (Case + Order). CA zařazen dle data vzniku (extrakt nemá done-date).</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <footer>
@@ -1248,6 +1286,44 @@ const EWFC=[["2024-01",1397,154,1565],["2024-02",1365,202,1430],["2024-03",1338,
         x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:10},maxRotation:60,minRotation:60}},
         yv:{position:'right',grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}},title:{display:true,text:'počet',color:'#94a3b8',font:{size:10}},beginAtZero:true},
         yr:{position:'left',grid:{color:'#334155'},ticks:{color:'#fbbf24',font:{size:10}},title:{display:true,text:'firstcall / auto',color:'#fbbf24',font:{size:10}},beginAtZero:true,suggestedMax:11}
+      }}
+  });
+})();
+</script>
+<script>
+// ===== Pracnost — CarAudity na prodané auto =====  [ym, ca_done, phase2, sold]
+const CAPS=[["2024-01",490,610,154],["2024-02",502,588,202],["2024-03",525,618,220],["2024-04",576,664,233],["2024-05",636,743,278],["2024-06",531,602,234],["2024-07",479,570,211],["2024-08",419,475,174],["2024-09",488,557,193],["2024-10",517,614,200],["2024-11",431,511,181],["2024-12",336,410,145],["2025-01",353,420,156],["2025-02",353,426,161],["2025-03",390,479,202],["2025-04",371,451,205],["2025-05",394,474,166],["2025-06",422,523,174],["2025-07",376,459,182],["2025-08",403,509,152],["2025-09",452,589,225],["2025-10",506,635,235],["2025-11",482,607,232],["2025-12",309,396,152],["2026-01",417,530,203],["2026-02",445,551,184],["2026-03",534,701,225],["2026-04",554,724,257],["2026-05",573,771,232],["2026-06",420,614,208]];
+(function(){
+  var m=document.getElementById('caModal');
+  if(document.getElementById('caInfoBtn')) document.getElementById('caInfoBtn').addEventListener('click',function(){m.style.display='flex';});
+  if(document.getElementById('caClose')) document.getElementById('caClose').addEventListener('click',function(){m.style.display='none';});
+  if(m) m.addEventListener('click',function(e){if(e.target===m)m.style.display='none';});
+  var MON=['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+  var n=CAPS.length, fmt=function(r){var a=r[0].split('-');return MON[+a[1]-1]+' '+a[0].slice(2);};
+  var idx=[];for(var i=n-1;i>=0;i--)idx.push(i);
+  var labels=idx.map(function(i){return fmt(CAPS[i]);});
+  var done=idx.map(function(i){return CAPS[i][1];});
+  var sold=idx.map(function(i){return CAPS[i][3];});
+  var doneR=idx.map(function(i){return +(CAPS[i][1]/CAPS[i][3]).toFixed(2);});
+  var p2R=idx.map(function(i){return +(CAPS[i][2]/CAPS[i][3]).toFixed(2);});
+  function wavg(f,t){var s=0,d=0;for(var i=f;i<=t;i++){s+=CAPS[i][1];d+=CAPS[i][3];}return (s/d).toFixed(1);}
+  var lastFull=n-2;
+  var kp=[[fmt(CAPS[lastFull])+' (poslední úplný)',(CAPS[lastFull][1]/CAPS[lastFull][3]).toFixed(1)],['Průměr 2024',wavg(0,11)],['Průměr 2025',wavg(12,23)],['2026 YTD',wavg(24,Math.min(lastFull,n-2))]];
+  var kpEl=document.getElementById('ca-kpi');
+  if(kpEl) kpEl.innerHTML=kp.map(function(k){return '<div class="kpi"><div class="v" style="color:#fbbf24">'+k[1]+'×</div><div class="l">'+k[0]+'</div></div>';}).join('');
+  new Chart(document.getElementById('caps'),{
+    data:{labels:labels,datasets:[
+      {type:'bar',label:'Dokončené CarAudity',yAxisID:'yv',data:done,backgroundColor:done.map(function(_,i){return i===0?'rgba(56,189,248,.4)':'#38bdf8';}),borderRadius:3,order:3},
+      {type:'bar',label:'Prodaná auta',yAxisID:'yv',data:sold,backgroundColor:sold.map(function(_,i){return i===0?'rgba(34,197,94,.4)':'#22c55e';}),borderRadius:3,order:2},
+      {type:'line',label:'Do Phase 2 / prodej',yAxisID:'yr',data:p2R,borderColor:'#94a3b8',backgroundColor:'#94a3b8',borderWidth:1.5,borderDash:[5,4],tension:.3,pointRadius:0,order:1},
+      {type:'line',label:'Dokončené CA / prodej',yAxisID:'yr',data:doneR,borderColor:'#fbbf24',backgroundColor:'#fbbf24',borderWidth:2.5,tension:.3,pointRadius:doneR.map(function(_,i){return i===0?5:3;}),pointStyle:doneR.map(function(_,i){return i===0?'circle':'rectRot';}),pointBackgroundColor:doneR.map(function(_,i){return i===0?'#0f172a':'#fbbf24';}),segment:{borderDash:function(c){return c.p0DataIndex===0?[5,4]:undefined;}},order:0}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{afterBody:function(it){var i=it[0].dataIndex;return 'Dokončené CA/prodej: '+doneR[i].toFixed(2)+'  ·  Phase2/prodej: '+p2R[i].toFixed(2);}}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:10},maxRotation:60,minRotation:60}},
+        yv:{position:'right',grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}},title:{display:true,text:'počet',color:'#94a3b8',font:{size:10}},beginAtZero:true},
+        yr:{position:'left',grid:{color:'#334155'},ticks:{color:'#fbbf24',font:{size:10}},title:{display:true,text:'CA / auto',color:'#fbbf24',font:{size:10}},beginAtZero:true,suggestedMax:4}
       }}
   });
 })();
