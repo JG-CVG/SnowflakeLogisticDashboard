@@ -370,6 +370,16 @@ function mk(cv,paidI,accI,lostI,pred,startYm){
           ctx.lineWidth=3;ctx.strokeStyle='rgba(15,23,42,.9)';ctx.fillStyle='#e2e8f0';
           ctx.strokeText(tot,seg.x,yy);ctx.fillText(tot,seg.x,yy);ctx.restore();
         });
+        // počet Contract Paid uvnitř zeleného segmentu
+        const m0=c.getDatasetMeta(0);
+        c.data.labels.forEach((_,j)=>{
+          const sp=m0.data[j]; if(!sp)return;
+          const v=c.data.datasets[0].data[j]; if(!v)return;
+          if(Math.abs(sp.base-sp.y)<14)return;
+          const yc=(sp.y+sp.base)/2;
+          ctx.save();ctx.font='600 10px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillStyle='#0b3d1e';ctx.fillText(v,sp.x,yc);ctx.restore();
+        });
         // 🏆 rekord
         const bm=c.getDatasetMeta(0).data[recRev];
         if(bm){let top=bm.y;[0,1,2].forEach(d=>{const m=c.getDatasetMeta(d).data[recRev];if(m&&m.y<top)top=m.y;});
