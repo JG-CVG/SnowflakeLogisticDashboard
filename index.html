@@ -140,9 +140,9 @@
     </div>
     <div class="card">
       <h2>📄 Instamotion — Contract Accepted<span class="srcb crm">☁ Salesforce</span></h2>
-      <div class="sub">Objednávky čekající na platbu · status ord-contract-accepted · ze Salesforce (na vyžádání)</div>
+      <div class="sub">Objednávky čekající na platbu · 🧾 vydaná faktura → storno od Invoice date · ⏳ bez faktury → čeká na vystavení (dny od Contract Accepted) · ze Salesforce</div>
       <div class="imkpi" id="imca-kpi"></div>
-      <div style="overflow:auto;max-height:220px"><div id="imca-table"></div></div>
+      <div style="overflow:auto;max-height:340px"><div id="imca-table"></div></div>
     </div>
     <div class="card">
       <h2>📋 Instamotion — Active Document &amp; Registration Cases<span class="srcb crm">☁ Salesforce</span></h2>
@@ -593,43 +593,38 @@ function busdays(s,e){ s=new Date(s); e=new Date(e); if(e<=s)return 0; let n=0,d
 const TODAY=new Date();
 
 // ===== IM Contract Accepted (Salesforce, na vyžádání) =====
-// [num, acc, typ, ca, ec, rc, edp, rdp, ccp, eb, rb]
-const IMCA=[
- ["666224","Melanie Singer","—","2026-06-16",null,null,null,null,null,null,null],
- ["666490","Angelika Friese","FIN","2026-06-17",null,null,null,null,null,30973,null],
- ["666484","Groh Marco","CASH","2026-06-18",32614,null,null,null,null,null,null],
- ["666344","Bernd Feldmann","FIN","2026-06-18",null,null,null,null,null,18348,null],
- ["666704","Rocco Leone","FIN","2026-06-18",null,null,null,null,null,27123,null],
- ["666192","Patrick Küppers","FIN","2026-06-19",null,null,null,null,null,23242,null],
- ["667272","Matthias Thieme","DP+FIN","2026-06-19",null,null,11571.6,null,null,27000.4,null],
- ["666223","Christoph Müller","DP+FIN","2026-06-19",null,null,3974.6,null,null,15898.4,null],
- ["665018","Johannes Schnee","—","2026-06-20",null,null,null,null,null,null,null],
- ["667231","Isolde Kirsch","CASH","2026-06-21",24673,null,null,null,null,null,null]
-];
+// {num,acc,typ,ca,inv,ec,rc,edp,rdp,ccp,eb,rb,bcp} · inv = Invoice Date (vydaná faktura faktura-vydana)
+const IMCA=[{"num":"665018","acc":"Johannes Schnee","typ":"—","ca":"2026-06-20","inv":null,"ec":null,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":null,"rb":null,"bcp":null},{"num":"666014","acc":"Eric Bünger","typ":"FIN","ca":"2026-06-24","inv":"2026-06-24","ec":null,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":17373,"rb":null,"bcp":null},{"num":"666224","acc":"Melanie Singer","typ":"—","ca":"2026-06-16","inv":null,"ec":null,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":null,"rb":null,"bcp":null},{"num":"666484","acc":"Groh Marco","typ":"CASH","ca":"2026-06-18","inv":"2026-06-19","ec":32614,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":null,"rb":null,"bcp":null},{"num":"666490","acc":"Angelika Friese","typ":"FIN","ca":"2026-06-17","inv":"2026-06-23","ec":null,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":30973,"rb":null,"bcp":null},{"num":"667231","acc":"Isolde Kirsch","typ":"CASH","ca":"2026-06-21","inv":"2026-06-22","ec":24673,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":null,"rb":null,"bcp":null},{"num":"667435","acc":"Michelle Glowacki","typ":"FIN","ca":"2026-06-24","inv":null,"ec":null,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":24498,"rb":null,"bcp":null},{"num":"667500","acc":"Alexandra Anft","typ":"DP+FIN","ca":"2026-06-23","inv":"2026-06-23","ec":null,"rc":null,"edp":2730,"rdp":null,"ccp":null,"eb":23493,"rb":null,"bcp":null},{"num":"667709","acc":"Michelle Herrmann","typ":"CASH","ca":"2026-06-23","inv":"2026-06-25","ec":22352,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":null,"rb":null,"bcp":null},{"num":"667904","acc":"Brahim Ghaouthi","typ":"DP+FIN","ca":"2026-06-24","inv":null,"ec":null,"rc":null,"edp":2712,"rdp":null,"ccp":null,"eb":8890,"rb":null,"bcp":null},{"num":"667908","acc":"Maqsood Ahmad","typ":"DP+FIN","ca":"2026-06-22","inv":"2026-06-23","ec":null,"rc":null,"edp":910,"rdp":null,"ccp":null,"eb":17263,"rb":null,"bcp":null},{"num":"667931","acc":"Don Moritz","typ":"FIN","ca":"2026-06-24","inv":null,"ec":null,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":19998,"rb":null,"bcp":null},{"num":"667946","acc":"Moritz Maschmann","typ":"—","ca":"2026-06-23","inv":"2026-06-24","ec":null,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":null,"rb":null,"bcp":null},{"num":"668105","acc":"Roshith Jacob","typ":"CASH","ca":"2026-06-23","inv":"2026-06-24","ec":9723,"rc":null,"edp":null,"rdp":null,"ccp":null,"eb":null,"rb":null,"bcp":null},{"num":"668155","acc":"Frédéric Ambroise Schiller","typ":"DP+FIN","ca":"2026-06-24","inv":"2026-06-24","ec":null,"rc":null,"edp":16000,"rdp":null,"ccp":null,"eb":33123,"rb":null,"bcp":null},{"num":"668185","acc":"Donald Shqalshi","typ":"DP+FIN","ca":"2026-06-24","inv":null,"ec":null,"rc":null,"edp":14900,"rdp":null,"ccp":null,"eb":27573,"rb":null,"bcp":null}];
 (function(){
   const eur=v=>v==null?'<span style="color:#475569">—</span>':Math.round(v).toLocaleString('cs')+' €';
   const badge=t=>{var c={'CASH':['#1e3a8a','#bfdbfe'],'FIN':['#14532d','#bbf7d0'],'DP+FIN':['#7c2d12','#fed7aa']}[t]||['#334155','#94a3b8'];
     return t==='—'?'<span style="color:#475569">—</span>':'<span class="badge" style="background:'+c[0]+';color:'+c[1]+'">'+t+'</span>';};
-  const rows=IMCA.map(r=>{const days=busdays(r[3],TODAY);const missing=(r[5]==null&&r[7]==null);return {r,days,missing};})
-                 .sort((a,b)=>b.days-a.days);
-  // KPI
-  const miss=rows.filter(x=>x.missing).length;
-  const exp=rows.reduce((s,x)=>s+(x.r[4]||0)+(x.r[6]||0),0);
-  const oldest=rows.length?rows[0].days:0;
+  const dmy=v=>{if(!v)return '<span style="color:#475569">—</span>';var x=v.split('-');return x[2]+'. '+(+x[1])+'. '+x[0];};
+  const rows=IMCA.map(d=>{const invoiced=d.inv!=null;const missing=(d.rc==null&&d.rdp==null);
+    return {d,invoiced,missing,daysFa:invoiced?busdays(d.inv,TODAY):null,daysCa:busdays(d.ca,TODAY)};})
+    .sort((a,b)=>{if(a.invoiced!==b.invoiced)return a.invoiced?-1:1;return a.invoiced?(b.daysFa-a.daysFa):(b.daysCa-a.daysCa);});
+  const invN=rows.filter(x=>x.invoiced).length, noinvN=rows.length-invN;
+  const exp=rows.reduce((s,x)=>s+(x.d.ec||0)+(x.d.edp||0),0);
+  const oldestFa=Math.max(0,...rows.filter(x=>x.invoiced).map(x=>x.daysFa));
+  const oldestCa=Math.max(0,...rows.filter(x=>!x.invoiced).map(x=>x.daysCa));
   document.getElementById('imca-kpi').innerHTML=
     '<div class="b"><div class="v">'+rows.length+'</div><div class="l">Objednávek celkem</div></div>'+
-    '<div class="b"><div class="v" style="color:'+(miss>0?'#ef4444':'#e2e8f0')+'">'+miss+'</div><div class="l">Chybí platba zákazníka</div></div>'+
+    '<div class="b"><div class="v" style="color:#86efac">'+invN+'</div><div class="l">🧾 Vydaná faktura</div></div>'+
+    '<div class="b"><div class="v" style="color:'+(noinvN>0?'#fbbf24':'#22c55e')+'">'+noinvN+'</div><div class="l">⏳ Čeká na fakturu</div></div>'+
     '<div class="b"><div class="v" style="color:#38bdf8">'+Math.round(exp/1000)+'k €</div><div class="l">Exp. platba celkem</div></div>'+
-    '<div class="b"><div class="v" style="color:'+(oldest>=15?'#ef4444':oldest>=6?'#f59e0b':'#e2e8f0')+'">'+oldest+'</div><div class="l">Nejstarší čekání (dny)</div></div>';
-  // storno
-  const storno=(m,d)=>!m?'<span style="color:#475569">—</span>':d<=5?'<span style="color:#22c55e">☀ OK</span>':d<=14?'<span style="color:#f59e0b">💶 400 €</span>':'<span style="color:#ef4444">💶 800 €</span>';
-  let h='<table class="imt"><thead><tr>'+
-    '<th class="l">Obj.</th><th class="l">Zákazník</th><th>Typ</th><th>Čeká</th><th>Storno</th>'+
-    '<th>Exp. platba</th><th>Exp. banka</th></tr></thead><tbody>';
-  rows.forEach(x=>{const r=x.r;const bg=x.missing&&x.days>=15?'background:#3a1414':x.missing&&x.days>=6?'background:#3a3014':'';
-    h+='<tr style="'+bg+'"><td class="l" style="color:#cbd5e1;font-weight:600">'+r[0]+'</td><td class="l">'+r[1]+'</td><td>'+badge(r[2])+'</td>'+
-      '<td style="font-weight:700">'+x.days+'</td><td>'+storno(x.missing,x.days)+'</td>'+
-      '<td>'+eur(r[4])+'</td><td>'+eur(r[9])+'</td></tr>';});
+    '<div class="b"><div class="v" style="color:'+(oldestFa>=15?'#ef4444':oldestFa>=6?'#f59e0b':'#e2e8f0')+'">'+oldestFa+'</div><div class="l">Nejdéle od fa (dny)</div></div>'+
+    '<div class="b"><div class="v" style="color:'+(oldestCa>=10?'#ef4444':oldestCa>=5?'#f59e0b':'#e2e8f0')+'">'+oldestCa+'</div><div class="l">Nejdéle bez fa (dny)</div></div>';
+  const stav=x=>x.invoiced?'<span title="Vydaná faktura — storno běží" style="color:#86efac;font-weight:600">🧾 fa</span>':'<span title="Bez faktury — čeká na vystavení" style="color:#fbbf24;font-weight:600">⏳ čeká</span>';
+  const storno=x=>(!x.invoiced||!x.missing)?'<span style="color:#475569">—</span>':x.daysFa<=5?'<span style="color:#22c55e">☀ OK</span>':x.daysFa<=14?'<span style="color:#f59e0b">💶 400 €</span>':'<span style="color:#ef4444">💶 800 € !</span>';
+  let h='<table class="imt"><thead><tr><th class="l">Obj.</th><th class="l">Zákazník</th><th>Typ</th><th>Stav</th><th>Čeká od fa</th><th>Čeká na fa</th><th>Storno</th><th>CA datum</th><th>Invoice date</th><th>Exp. platba</th><th>Exp. banka</th></tr></thead><tbody>';
+  rows.forEach(x=>{const d=x.d;let bg='';
+    if(x.invoiced){if(x.missing&&x.daysFa>=15)bg='background:#3a1414';else if(x.missing&&x.daysFa>=6)bg='background:#3a3014';}
+    else{if(x.daysCa>=10)bg='background:#3a1414';else if(x.daysCa>=5)bg='background:#3a3014';}
+    h+='<tr style="'+bg+'"><td class="l" style="color:#cbd5e1;font-weight:600">'+d.num+'</td><td class="l">'+d.acc+'</td><td>'+badge(d.typ)+'</td><td>'+stav(x)+'</td>'+
+      '<td style="font-weight:700;color:'+(x.invoiced?'#fbbf24':'#475569')+'">'+(x.invoiced?x.daysFa:'—')+'</td>'+
+      '<td style="font-weight:700;color:'+(!x.invoiced?(x.daysCa>=10?'#ef4444':x.daysCa>=5?'#f59e0b':'#cbd5e1'):'#475569')+'">'+(!x.invoiced?x.daysCa:'—')+'</td>'+
+      '<td>'+storno(x)+'</td><td style="color:#94a3b8">'+dmy(d.ca)+'</td><td style="color:'+(d.inv?'#fbbf24':'#475569')+'">'+dmy(d.inv)+'</td>'+
+      '<td>'+eur(d.ec)+'</td><td>'+eur(d.eb)+'</td></tr>';});
   h+='</tbody></table>';
   document.getElementById('imca-table').innerHTML=h;
 })();
