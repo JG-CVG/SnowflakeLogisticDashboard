@@ -646,24 +646,34 @@ const CEBIA=[
 })();
 
 // ===== helper: stacked weekly bar (newest left, total label) =====
-function stackedWeekly(cv,data,segs,pct){
+function stackedWeekly(cv,data,segs,opts){
+  opts=(opts===true)?{pct:true}:(opts||{});
   const rows=data.slice().reverse();
   const labs=rows.map(r=>r[0]);
   const ds=segs.map(s=>({label:s[0],data:rows.map(r=>r[s[2]]),backgroundColor:s[1],stack:'s',borderRadius:3}));
+  const tcb={footer:function(it){var t=0;for(var k=0;k<it.length;k++)t+=it[k].parsed.y;return 'Celkem: '+t;}};
+  if(opts.pct){ tcb.label=function(it){var d=it.chart.data.datasets,tot=0;for(var k=0;k<d.length;k++)tot+=(d[k].data[it.dataIndex]||0);
+    var v=it.parsed.y; if(!v)return undefined; return ' '+it.dataset.label+': '+v+'  ('+Math.round(v/tot*100)+' %)';}; }
+  const plugins=[{id:'tl',afterDatasetsDraw:function(c){var ctx=c.ctx,top=c.getDatasetMeta(c.data.datasets.length-1).data;
+      c.data.labels.forEach(function(_,j){var seg=top[j];if(!seg)return;var t=0;c.data.datasets.forEach(function(d){t+=(d.data[j]||0);});if(!t)return;
+        ctx.save();ctx.font='600 9px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(15,23,42,.9)';ctx.fillStyle='#e2e8f0';
+        ctx.strokeText(t,seg.x,seg.y-3);ctx.fillText(t,seg.x,seg.y-3);ctx.restore();});}}];
+  if(opts.pct){ plugins.push({id:'segpct',afterDatasetsDraw:function(c){var ctx=c.ctx;
+      var totals=c.data.labels.map(function(_,j){var t=0;c.data.datasets.forEach(function(d){t+=(d.data[j]||0);});return t;});
+      c.data.datasets.forEach(function(dset,di){var meta=c.getDatasetMeta(di);
+        meta.data.forEach(function(el,j){var v=dset.data[j]||0,tot=totals[j];if(!v||!tot)return;
+          if(Math.abs(el.base-el.y)<13)return; var p=Math.round(v/tot*100); if(!p)return;
+          var yc=(el.y+el.base)/2;
+          ctx.save();ctx.font='700 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.lineWidth=2.5;ctx.strokeStyle='rgba(11,16,24,.75)';ctx.strokeText(p+'%',el.x,yc);
+          ctx.fillStyle='#f8fafc';ctx.fillText(p+'%',el.x,yc);ctx.restore();});});}}); }
   new Chart(document.getElementById(cv),{type:'bar',data:{labels:labs,datasets:ds},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{labels:{color:'#cbd5e1',boxWidth:10,font:{size:9}}},
-        tooltip:{mode:'index',intersect:false,callbacks:{footer:function(it){var t=0;for(var k=0;k<it.length;k++)t+=it[k].parsed.y;return 'Celkem: '+t;}}}},
+        tooltip:{mode:'index',intersect:false,callbacks:tcb}},
       scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:9},maxRotation:60,minRotation:60}},
         y:{stacked:true,grid:{color:'#334155'},ticks:{color:'#94a3b8',font:{size:10}}}}},
-    plugins:[{id:'tl',afterDatasetsDraw:function(c){var ctx=c.ctx,top=c.getDatasetMeta(c.data.datasets.length-1).data;
-      if(pct){c.data.datasets.forEach(function(d,di){var meta=c.getDatasetMeta(di);
-        meta.data.forEach(function(el,j){var v=d.data[j]||0;if(!v)return;var t=0;c.data.datasets.forEach(function(dd){t+=(dd.data[j]||0);});if(!t)return;
-          var p=Math.round(v/t*100);if(p<8)return;if(Math.abs(el.base-el.y)<13)return;var yc=(el.y+el.base)/2;
-          ctx.save();ctx.font='600 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(p+'%',el.x,yc);ctx.restore();});});}
-      c.data.labels.forEach(function(_,j){var seg=top[j];if(!seg)return;var t=0;c.data.datasets.forEach(function(d){t+=(d.data[j]||0);});if(!t)return;
-        ctx.save();ctx.font='600 9px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(15,23,42,.9)';ctx.fillStyle='#e2e8f0';
-        ctx.strokeText(t,seg.x,seg.y-3);ctx.fillText(t,seg.x,seg.y-3);ctx.restore();});}}]
+    plugins:plugins
   });
 }
 
@@ -747,7 +757,7 @@ const FCTOP=[
 
 // ===== CarAudit (Phase 2) — In Progress / Done / Closed (weekly) =====  [wk, done, inprogress, closed]
 const CA1=[["47/25",109,0,59],["48/25",107,0,55],["49/25",98,0,53],["50/25",70,0,57],["51/25",58,0,42],["52/25",23,0,20],["1/26",40,0,34],["2/26",95,0,55],["3/26",105,0,53],["4/26",90,0,65],["5/26",81,0,52],["6/26",109,0,41],["7/26",96,0,47],["8/26",103,0,57],["9/26",86,0,63],["10/26",102,0,52],["11/26",111,0,66],["12/26",110,0,78],["13/26",119,0,86],["14/26",91,0,74],["15/26",106,0,60],["16/26",134,0,80],["17/26",145,0,82],["18/26",84,0,73],["19/26",118,0,94],["20/26",134,0,101],["21/26",135,0,86],["22/26",127,0,88],["23/26",132,0,103],["24/26",106,4,77],["25/26",60,46,41],["26/26",1,9,0]];
-stackedWeekly('ca1',CA1,[['Done','#22c55e',1],['In Progress','#3b82f6',2],['Closed','#94a3b8',3]]);
+stackedWeekly('ca1',CA1,[['Done','#22c55e',1],['In Progress','#3b82f6',2],['Closed','#94a3b8',3]],{pct:true});
 
 // ===== CarAudit — Closed: reason breakdown (weekly) =====  [wk, car_na, car_cond, seller, auto, client, carvago, other]
 const CAR2=[["47/25",17,0,5,34,1,1,1],["48/25",10,0,2,40,2,0,1],["49/25",15,0,2,35,0,0,1],["50/25",14,0,2,39,1,0,1],["51/25",11,0,6,24,1,0,0],["52/25",4,0,2,11,3,0,0],["1/26",7,0,7,20,0,0,0],["2/26",8,0,9,37,1,0,0],["3/26",8,0,4,39,2,0,0],["4/26",22,0,9,32,2,0,0],["5/26",9,0,6,34,2,0,1],["6/26",12,0,6,23,0,0,0],["7/26",14,0,7,23,2,0,1],["8/26",18,0,7,30,1,1,0],["9/26",17,0,2,43,1,0,0],["10/26",16,0,6,27,2,1,0],["11/26",19,0,7,37,1,2,0],["12/26",22,0,4,47,2,2,1],["13/26",20,0,8,54,3,1,1],["14/26",30,0,3,41,0,0,0],["15/26",23,0,2,31,2,2,0],["16/26",30,0,7,39,3,1,0],["17/26",27,0,5,49,0,1,0],["18/26",17,0,3,51,1,1,0],["19/26",24,0,5,60,4,0,1],["20/26",29,0,5,64,0,2,1],["21/26",21,0,11,50,2,1,1],["22/26",27,0,14,44,3,0,0],["23/26",23,0,10,61,3,2,4],["24/26",25,0,2,46,2,1,1],["25/26",14,0,4,19,3,1,0]];
