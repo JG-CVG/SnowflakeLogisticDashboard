@@ -646,7 +646,7 @@ const CEBIA=[
 })();
 
 // ===== helper: stacked weekly bar (newest left, total label) =====
-function stackedWeekly(cv,data,segs){
+function stackedWeekly(cv,data,segs,pct){
   const rows=data.slice().reverse();
   const labs=rows.map(r=>r[0]);
   const ds=segs.map(s=>({label:s[0],data:rows.map(r=>r[s[2]]),backgroundColor:s[1],stack:'s',borderRadius:3}));
@@ -657,6 +657,10 @@ function stackedWeekly(cv,data,segs){
       scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:9},maxRotation:60,minRotation:60}},
         y:{stacked:true,grid:{color:'#334155'},ticks:{color:'#94a3b8',font:{size:10}}}}},
     plugins:[{id:'tl',afterDatasetsDraw:function(c){var ctx=c.ctx,top=c.getDatasetMeta(c.data.datasets.length-1).data;
+      if(pct){c.data.datasets.forEach(function(d,di){var meta=c.getDatasetMeta(di);
+        meta.data.forEach(function(el,j){var v=d.data[j]||0;if(!v)return;var t=0;c.data.datasets.forEach(function(dd){t+=(dd.data[j]||0);});if(!t)return;
+          var p=Math.round(v/t*100);if(p<8)return;if(Math.abs(el.base-el.y)<13)return;var yc=(el.y+el.base)/2;
+          ctx.save();ctx.font='600 9px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.fillText(p+'%',el.x,yc);ctx.restore();});});}
       c.data.labels.forEach(function(_,j){var seg=top[j];if(!seg)return;var t=0;c.data.datasets.forEach(function(d){t+=(d.data[j]||0);});if(!t)return;
         ctx.save();ctx.font='600 9px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(15,23,42,.9)';ctx.fillStyle='#e2e8f0';
         ctx.strokeText(t,seg.x,seg.y-3);ctx.fillText(t,seg.x,seg.y-3);ctx.restore();});}}]
@@ -672,7 +676,7 @@ const FC1=[
  ["16/26",214,0,351],["17/26",229,0,320],["18/26",157,0,235],["19/26",213,0,274],["20/26",237,0,274],
  ["21/26",226,0,305],["22/26",225,0,287],["23/26",243,0,256],["24/26",195,0,229],["25/26",209,16,160],["26/26",23,40,24]
 ];
-stackedWeekly('fc1',FC1,[['Done','#22c55e',1],['In Progress','#3b82f6',2],['Closed','#ef4444',3]]);
+stackedWeekly('fc1',FC1,[['Done','#22c55e',1],['In Progress','#3b82f6',2],['Closed','#ef4444',3]],true);
 
 // ===== 1st Call — Closed: reason breakdown (weekly) =====  [wk, car_na, client, car_cond, seller, carvago, other]
 const FCR=[
