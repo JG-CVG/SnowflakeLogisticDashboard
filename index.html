@@ -170,48 +170,6 @@
       <div class="sub">Case RecordType Cebia_CarAudit · měsíc dle CreatedDate · nejnovější měsíc vlevo</div>
       <div class="chartbox"><canvas id="cebia"></canvas></div>
     </div>
-    <div class="card full" style="position:relative">
-      <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-        <span>🧮 Pracnost — Effort-weighted 1st cally na 1 prodané auto<span class="srcb sf">❄ Snowflake</span></span>
-        <button id="ewInfoBtn" aria-label="Jak se graf počítá" title="Jak se graf počítá" style="flex:none;width:24px;height:24px;border-radius:50%;border:1px solid #38bdf8;background:rgba(56,189,248,.12);color:#7dd3fc;cursor:pointer;font-size:13px;font-weight:700;font-style:italic;line-height:1">i</button>
-      </h2>
-      <div class="sub">1st cally vážené dle fáze, kam se CA dostala, na 1 prodané auto (Contract Paid) · měsíčně · nejnovější vlevo · klikni na „i" pro popis</div>
-      <div class="kpis" id="ew-kpi"></div>
-      <div style="display:flex;flex-wrap:wrap;gap:14px;margin:2px 0 6px;font-size:11px;color:#94a3b8">
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:3px;background:#fbbf24;display:inline-block"></span>Effort-weighted poměr</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:0;border-top:2px dashed #94a3b8;display:inline-block"></span>Raw poměr (vše = 1)</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#38bdf8;display:inline-block"></span>Effort 1st cally</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Prodaná auta</span>
-      </div>
-      <div class="chartbox" style="height:320px"><canvas id="ewfc"></canvas></div>
-      <div style="font-size:10px;color:#64748b;margin-top:8px">První sloupec (nejnovější) = neúplný probíhající měsíc. Zdroj ❄ Snowflake (Case + Order).</div>
-      <div id="ewModal" style="display:none;position:absolute;inset:0;background:rgba(2,6,23,.72);border-radius:16px;align-items:center;justify-content:center;padding:18px;z-index:30">
-        <div role="dialog" aria-label="Jak se graf počítá" style="background:#1e293b;border:1px solid #38506e;border-radius:14px;max-width:560px;max-height:100%;overflow:auto;padding:20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.5)">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px">
-            <div style="font-size:16px;font-weight:700;color:#e2e8f0">Jak se graf počítá</div>
-            <button id="ewClose" aria-label="Zavřít" style="width:28px;height:28px;border-radius:8px;border:1px solid #334155;background:#162033;color:#94a3b8;cursor:pointer;font-size:15px;line-height:1">✕</button>
-          </div>
-          <div style="font-size:13px;line-height:1.65;color:#cbd5e1">
-            <p style="margin:0 0 12px"><b style="color:#e2e8f0">Co měří:</b> pracnost na jedno prodané auto — kolik práce na 1st callech (ověřování vozů) padne na jeden prodej. Vyšší hodnota = vyšší pracnost / nižší konverze nálevky.</p>
-            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Čitatel — effort-weighted 1st cally</p>
-            <p style="margin:0 0 6px">Carvago CarAudit case (RecordType CarAudit + Carvago CarAudit, bez Cebia, bez Instamotion), počítané do měsíce dle data vzniku. Každý se nezapočítá jako 1, ale vahou podle nejzazší fáze, kam se dostal:</p>
-            <ul style="margin:0 0 12px;padding-left:18px">
-              <li>New CA (odmítnut hned) — <b style="color:#fbbf24">0,2</b></li>
-              <li>Data Validation — <b style="color:#fbbf24">0,4</b></li>
-              <li>Car Check (proběhl hovor s prodejcem) — <b style="color:#fbbf24">1,0</b></li>
-              <li>VIN Check — <b style="color:#fbbf24">1,0</b></li>
-              <li>Dokončený 1st call (Awaiting Selection a dál, vč. Phase 2) — <b style="color:#fbbf24">1,0</b></li>
-            </ul>
-            <p style="margin:0 0 12px;color:#94a3b8">Logika: hlavní práce (telefonát prodejci) je až ve fázi Car Check; New CA a Data Validation jsou rychlé admin kroky, proto nižší váha.</p>
-            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Jmenovatel — prodaná auta</p>
-            <p style="margin:0 0 12px">Carvago Contract Paid: objednávka má Contract Accepted i Contract Paid, není Lost ani Canceled With Alternative, není Instamotion, bez zemí XK/AL, bez test orderů. Měsíc = měsíc Contract Paid Date.</p>
-            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Poměr</p>
-            <p style="margin:0 0 12px">Σ(váhy 1st callů v měsíci) ÷ počet prodaných aut v měsíci. <span style="color:#94a3b8">Šedá tečkovaná čára = „raw" poměr, kde má každý 1st call váhu 1 (bez vážení) — pro srovnání.</span></p>
-            <p style="margin:0;color:#64748b;font-size:12px">Časová osa: rok-měsíc, nejnovější vlevo. Poslední sloupec je neúplný (probíhající měsíc). Zdroj: Snowflake (Keboola extrakt — objekty Case a Order).</p>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="card full">
       <h2>📞 1st Call — Done / In Progress / Closed (weekly)<span class="srcb crm">☁ Salesforce</span></h2>
       <div class="sub">Done = CA Awaiting Selection Date filled · Closed = Phase 1 reject · In Progress = bez rejectu · dle CA New CarAudit Date · nejnovější týden vlevo · ⚠ pole Awaiting Selection není ve Snowflake → přes SF konektor</div>
@@ -296,6 +254,48 @@
       <h2>🛒 Carvago Purchasing — Active Purchases<span class="srcb crm">☁ Salesforce</span></h2>
       <div class="sub">Probíhající nákupy vozů (Car Purchase) dle fáze × stáří · stáří = pracovní dny v aktuální fázi · bez Done/Closed · snapshot z CP reportu 22.06.2026 (CP date pole nejsou ve Snowflake extraktu)</div>
       <div id="active-purchases"></div>
+    </div>
+    <div class="card full" style="position:relative">
+      <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <span>🧮 Pracnost — Effort-weighted 1st cally na 1 prodané auto<span class="srcb sf">❄ Snowflake</span></span>
+        <button id="ewInfoBtn" aria-label="Jak se graf počítá" title="Jak se graf počítá" style="flex:none;width:24px;height:24px;border-radius:50%;border:1px solid #38bdf8;background:rgba(56,189,248,.12);color:#7dd3fc;cursor:pointer;font-size:13px;font-weight:700;font-style:italic;line-height:1">i</button>
+      </h2>
+      <div class="sub">1st cally vážené dle fáze, kam se CA dostala, na 1 prodané auto (Contract Paid) · měsíčně · nejnovější vlevo · klikni na „i" pro popis</div>
+      <div class="kpis" id="ew-kpi"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin:2px 0 6px;font-size:11px;color:#94a3b8">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:3px;background:#fbbf24;display:inline-block"></span>Effort-weighted poměr</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:0;border-top:2px dashed #94a3b8;display:inline-block"></span>Raw poměr (vše = 1)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#38bdf8;display:inline-block"></span>Effort 1st cally</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Prodaná auta</span>
+      </div>
+      <div class="chartbox" style="height:320px"><canvas id="ewfc"></canvas></div>
+      <div style="font-size:10px;color:#64748b;margin-top:8px">První sloupec (nejnovější) = neúplný probíhající měsíc. Zdroj ❄ Snowflake (Case + Order).</div>
+      <div id="ewModal" style="display:none;position:absolute;inset:0;background:rgba(2,6,23,.72);border-radius:16px;align-items:center;justify-content:center;padding:18px;z-index:30">
+        <div role="dialog" aria-label="Jak se graf počítá" style="background:#1e293b;border:1px solid #38506e;border-radius:14px;max-width:560px;max-height:100%;overflow:auto;padding:20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.5)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px">
+            <div style="font-size:16px;font-weight:700;color:#e2e8f0">Jak se graf počítá</div>
+            <button id="ewClose" aria-label="Zavřít" style="width:28px;height:28px;border-radius:8px;border:1px solid #334155;background:#162033;color:#94a3b8;cursor:pointer;font-size:15px;line-height:1">✕</button>
+          </div>
+          <div style="font-size:13px;line-height:1.65;color:#cbd5e1">
+            <p style="margin:0 0 12px"><b style="color:#e2e8f0">Co měří:</b> pracnost na jedno prodané auto — kolik práce na 1st callech (ověřování vozů) padne na jeden prodej. Vyšší hodnota = vyšší pracnost / nižší konverze nálevky.</p>
+            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Čitatel — effort-weighted 1st cally</p>
+            <p style="margin:0 0 6px">Carvago CarAudit case (RecordType CarAudit + Carvago CarAudit, bez Cebia, bez Instamotion), počítané do měsíce dle data vzniku. Každý se nezapočítá jako 1, ale vahou podle nejzazší fáze, kam se dostal:</p>
+            <ul style="margin:0 0 12px;padding-left:18px">
+              <li>New CA (odmítnut hned) — <b style="color:#fbbf24">0,2</b></li>
+              <li>Data Validation — <b style="color:#fbbf24">0,4</b></li>
+              <li>Car Check (proběhl hovor s prodejcem) — <b style="color:#fbbf24">1,0</b></li>
+              <li>VIN Check — <b style="color:#fbbf24">1,0</b></li>
+              <li>Dokončený 1st call (Awaiting Selection a dál, vč. Phase 2) — <b style="color:#fbbf24">1,0</b></li>
+            </ul>
+            <p style="margin:0 0 12px;color:#94a3b8">Logika: hlavní práce (telefonát prodejci) je až ve fázi Car Check; New CA a Data Validation jsou rychlé admin kroky, proto nižší váha.</p>
+            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Jmenovatel — prodaná auta</p>
+            <p style="margin:0 0 12px">Carvago Contract Paid: objednávka má Contract Accepted i Contract Paid, není Lost ani Canceled With Alternative, není Instamotion, bez zemí XK/AL, bez test orderů. Měsíc = měsíc Contract Paid Date.</p>
+            <p style="margin:0 0 6px;color:#7dd3fc;font-weight:700">Poměr</p>
+            <p style="margin:0 0 12px">Σ(váhy 1st callů v měsíci) ÷ počet prodaných aut v měsíci. <span style="color:#94a3b8">Šedá tečkovaná čára = „raw" poměr, kde má každý 1st call váhu 1 (bez vážení) — pro srovnání.</span></p>
+            <p style="margin:0;color:#64748b;font-size:12px">Časová osa: rok-měsíc, nejnovější vlevo. Poslední sloupec je neúplný (probíhající měsíc). Zdroj: Snowflake (Keboola extrakt — objekty Case a Order).</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
