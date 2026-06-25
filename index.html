@@ -154,6 +154,11 @@
       <div class="sub">Výběr „Dovoz" − náklady (FirstMile + LastMile) · Carvago, completed, bez test, bez XK/AL · měsíc dle CA Accepted Date · ze Snowflake</div>
       <div class="chartbox" style="height:330px"><canvas id="trans"></canvas></div>
     </div>
+    <div class="card full" style="border-left:4px solid #ef4444">
+      <h2>💸 Seller Payment Backlog — aging (Car Purchase)<span class="srcb crm">☁ Salesforce</span></h2>
+      <div class="sub">Aktivní Car Purchase · zákazník zaplatil, Carvago ještě neposlalo prodejci · 2 témata dle fáze · stáří ≤2 / 3–4 / &gt;4 dny · objem v EUR (firemní kurzy SF) · snapshot 25.06.2026</div>
+      <div id="seller-backlog"></div>
+    </div>
     <div class="card full" style="border-left:4px solid #EAB308">
       <h2>📊 Preferred CA — Funnel (weekly)<span class="srcb crm">☁ Salesforce</span></h2>
       <div class="sub">Only Preferred Orders (CarAudits) · zdroj: Salesforce CP/Preferred report (Order: Preferred, Is TEST Case filtr) · položkově 1:1 s logistics dashboardem · nejnovější týden vlevo</div>
@@ -1102,6 +1107,44 @@ const AUDSEL_WEEKLY_DATA=[{week:"2025-W01",label:"W01/25",year:2025,week_num:1,t
   BK.forEach(b=>H+='<td style="text-align:right;font-weight:700;border-top:2px solid #222c3c;padding:9px 10px">'+colTot[b[0]]+'</td>');
   H+='<td style="text-align:right;font-weight:700;border-top:2px solid #222c3c;padding:9px 10px">'+grand+'</td></tr></tbody></table>';
   document.getElementById('active-purchases').innerHTML=H;
+})();
+</script>
+<script>
+(function(){
+  // S1: [name,total,≤2,3-4,>4]  · S2: [...,eurTotal,eurOver]  (snapshot 25.06.2026, SF)
+  const S1=[["DE - Carvago Deutschland GmbH",5,5,0,0],["— (bez Invoicing Company)",3,3,0,0],["NL - Fastback Marketplace NL B.V.",2,2,0,0],["CZ - Carvago s.r.o.",2,0,2,0],["DE - STH Consulting",1,0,0,1]];
+  const S2=[["DE - Carvago Deutschland GmbH",24,6,5,13,646957,380198],["CZ - Carvago s.r.o.",30,13,6,11,569032,229194],["AT - Carvago Österreich GmbH",2,1,1,0,39316,0]];
+  const FR='#22c55e',WA='#f59e0b',OV='#ef4444',MU='#8b97a8',LN='#222c3c';
+  const eur=n=>'€'+Math.round(n).toLocaleString('cs-CZ');
+  const sum=(a,i)=>a.reduce((s,e)=>s+(e[i]||0),0);
+  function seg(v,t,c){return v>0?'<span style="width:'+(v/t*100)+'%;background:'+c+'"></span>':'';}
+  function cards(arr,money){
+    let H='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:11px">';
+    arr.slice().sort((a,b)=>(money?(b[5]-a[5]):(b[3]-a[3]))||b[1]-a[1]).forEach(e=>{
+      const nm=e[0],tot=e[1],fr=e[2],wa=e[3],ov=e[4];
+      H+='<div style="background:#0e141f;border:1px solid '+(ov>0?'rgba(239,68,68,.45)':LN)+';border-radius:11px;padding:13px 14px">'
+        +'<div style="font-size:12.5px;font-weight:600;margin-bottom:9px;min-height:32px;line-height:1.2">'+nm+'</div>'
+        +'<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:9px">'
+          +'<div style="font-size:27px;font-weight:700;line-height:1">'+tot+' <span style="font-size:11px;color:'+MU+';font-weight:500">cases</span></div>'
+          +'<div style="text-align:right"><div style="font-size:20px;font-weight:700;color:'+OV+';line-height:1">'+ov+'</div><div style="font-size:10px;color:'+MU+'">&gt; 4 dny</div></div></div>'
+        +'<div style="display:flex;height:11px;border-radius:6px;overflow:hidden;margin:7px 0 6px;background:#1b2333">'+seg(fr,tot,FR)+seg(wa,tot,WA)+seg(ov,tot,OV)+'</div>'
+        +'<div style="display:flex;gap:11px;font-size:10.5px;color:'+MU+'"><span><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+FR+';margin-right:4px"></i>≤2: '+fr+'</span><span><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+WA+';margin-right:4px"></i>3–4: '+wa+'</span><span><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:'+OV+';margin-right:4px"></i>&gt;4: '+ov+'</span></div>';
+      if(money){H+='<div style="font-size:11.5px;color:#fbbf24;border-top:1px solid '+LN+';margin-top:8px;padding-top:7px">💶 '+eur(e[5])+' <span style="color:'+MU+'">k zaplacení</span>'+(e[6]>0?' · <span style="color:'+OV+'">'+eur(e[6])+' &gt;4d</span>':'')+'</div>';}
+      H+='</div>';
+    });
+    return H+'</div>';
+  }
+  function sechead(icon,title,note,arr,money){
+    let k='<span>celkem <b style="color:#e6edf6">'+sum(arr,1)+'</b></span> <span style="margin-left:14px">&gt;4 dny <b style="color:'+OV+'">'+sum(arr,4)+'</b></span>';
+    if(money)k+=' <span style="margin-left:14px">💶 k zaplacení <b style="color:#fbbf24">'+eur(sum(arr,5))+'</b></span> <span style="margin-left:14px">po termínu <b style="color:'+OV+'">'+eur(sum(arr,6))+'</b></span>';
+    return '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0 10px"><div style="font-size:14px;font-weight:600">'+icon+' '+title+' <span style="font-size:11px;color:'+MU+';font-weight:400">'+note+'</span></div><div style="font-size:12px;color:'+MU+'">'+k+'</div></div>';
+  }
+  const host=document.getElementById('seller-backlog');
+  host.innerHTML=
+    '<div style="border:1px solid '+LN+';border-left:4px solid #3b82f6;border-radius:12px;padding:12px 14px 14px;margin-bottom:14px">'
+      +sechead('💰','Máme peníze od zákazníka','— nezahájeno Payment Processing',S1,false)+cards(S1,false)+'</div>'
+    +'<div style="border:1px solid '+LN+';border-left:4px solid '+OV+';border-radius:12px;padding:12px 14px 14px">'
+      +sechead('🏦','CVG nezaplatilo vendorovi','— v Payment Processing',S2,true)+cards(S2,true)+'</div>';
 })();
 </script>
 </body>
