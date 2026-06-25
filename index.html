@@ -165,6 +165,18 @@
       <div class="pf-btns" id="pf-btns"></div>
       <div style="overflow-x:auto"><table class="pft" id="pf-table"></table></div>
     </div>
+    <div class="card full" style="border-left:4px solid #EAB308">
+      <h2>⭐ Preferované — konverze na prodej (Carvago)<span class="srcb crm">☁ Salesforce</span></h2>
+      <div class="sub">Z preferovaných objednávek s Contract Accepted kolik skončí prodejem (Contract Paid) vs ztrátou · kohorta dle měsíce akceptace · nejnovější vlevo</div>
+      <div class="kpis" id="pconv-kpi"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin:2px 0 6px;font-size:11px;color:#94a3b8">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:3px;background:#fbbf24;display:inline-block"></span>Konverze % (prodáno / vyřešeno)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Prodáno</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#ef4444;display:inline-block"></span>Ztraceno</span>
+      </div>
+      <div class="chartbox" style="height:300px"><canvas id="pconv"></canvas></div>
+      <div style="font-size:10px;color:#64748b;margin-top:8px">Konverze = prodáno / (prodáno + ztraceno). Poslední 1–2 měsíce mohou mít pár ještě nedořešených objednávek. Zdroj ☁ Salesforce (Order, Preferred=true, Instamotion=ne, bez XK/AL).</div>
+    </div>
     <div class="card full">
       <h2>🔎 Cebia CarAudits — In Progress / Done / Closed (monthly)<span class="srcb sf">❄ Snowflake</span></h2>
       <div class="sub">Case RecordType Cebia_CarAudit · měsíc dle CreatedDate · nejnovější měsíc vlevo</div>
@@ -1281,6 +1293,34 @@ const CAPS=[["2024-01",490,610,154],["2024-02",502,588,202],["2024-03",525,618,2
         yv:{position:'right',grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}},title:{display:true,text:'počet',color:'#94a3b8',font:{size:10}},beginAtZero:true},
         yr:{position:'left',grid:{color:'#334155'},ticks:{color:'#fbbf24',font:{size:10}},title:{display:true,text:'CA / auto',color:'#fbbf24',font:{size:10}},beginAtZero:true,suggestedMax:4}
       }}
+  });
+})();
+</script>
+<script>
+// ===== Preferované — konverze na prodej (Carvago) =====  [ym, paid, lost]  (kohorta dle Contract Accepted měsíce)
+const PCONV=[["2025-03",11,1],["2025-04",20,3],["2025-05",29,6],["2025-06",53,9],["2025-07",103,11],["2025-08",123,27],["2025-09",187,31],["2025-10",183,26],["2025-11",191,22],["2025-12",122,13],["2026-01",159,22],["2026-02",154,28],["2026-03",185,31],["2026-04",203,23],["2026-05",186,30],["2026-06",157,23]];
+(function(){
+  if(!document.getElementById('pconv'))return;
+  var MON=['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+  var n=PCONV.length, fmt=function(r){var a=r[0].split('-');return MON[+a[1]-1]+' '+a[0].slice(2);};
+  var idx=[];for(var i=n-1;i>=0;i--)idx.push(i);
+  var labels=idx.map(function(i){return fmt(PCONV[i]);});
+  var paid=idx.map(function(i){return PCONV[i][1];});
+  var lost=idx.map(function(i){return PCONV[i][2];});
+  var conv=idx.map(function(i){return +(100*PCONV[i][1]/(PCONV[i][1]+PCONV[i][2])).toFixed(1);});
+  function wr(pred){var p=0,l=0;PCONV.forEach(function(r){if(pred(r[0])){p+=r[1];l+=r[2];}});return (100*p/(p+l)).toFixed(1)+'%';}
+  var sumP=PCONV.reduce(function(s,r){return s+r[1];},0), sumL=PCONV.reduce(function(s,r){return s+r[2];},0);
+  var kp=[['Konverze 2025',wr(function(m){return m<'2026';}),'#fbbf24'],['Konverze 2026 YTD',wr(function(m){return m>='2026';}),'#fbbf24'],['Prodáno (od 2025)',sumP.toLocaleString('cs'),'#22c55e'],['Ztraceno',sumL.toLocaleString('cs'),'#ef4444']];
+  document.getElementById('pconv-kpi').innerHTML=kp.map(function(k){return '<div class="kpi"><div class="v" style="color:'+k[2]+'">'+k[1]+'</div><div class="l">'+k[0]+'</div></div>';}).join('');
+  new Chart(document.getElementById('pconv'),{data:{labels:labels,datasets:[
+    {type:'bar',label:'Prodáno',yAxisID:'yv',data:paid,backgroundColor:'#22c55e',borderRadius:3,stack:'s',order:3},
+    {type:'bar',label:'Ztraceno',yAxisID:'yv',data:lost,backgroundColor:'#ef4444',borderRadius:3,stack:'s',order:2},
+    {type:'line',label:'Konverze %',yAxisID:'yr',data:conv,borderColor:'#fbbf24',backgroundColor:'#fbbf24',borderWidth:2.5,tension:.3,pointRadius:3,pointStyle:'rectRot',order:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{callbacks:{afterBody:function(it){var i=it[0].dataIndex;return 'Konverze: '+conv[i].toFixed(1)+' %';}}}},
+    scales:{x:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:10},maxRotation:60,minRotation:60}},
+      yv:{stacked:true,position:'right',grid:{display:false},ticks:{color:'#94a3b8',font:{size:10}},title:{display:true,text:'objednávky',color:'#94a3b8',font:{size:10}},beginAtZero:true},
+      yr:{position:'left',grid:{color:'#334155'},ticks:{color:'#fbbf24',font:{size:10},callback:function(v){return v+'%';}},title:{display:true,text:'konverze %',color:'#fbbf24',font:{size:10}},min:0,max:100}}}
   });
 })();
 </script>
