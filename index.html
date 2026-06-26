@@ -1002,15 +1002,15 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
   render('costDE',CA_WEEKLY_COST_DATA_DE,26);
 })();
 
-const BUILD_TS="2026-06-26T07:11:57+02:00"; // skutečný čas posledního refreshe dat (stampuje scheduled task)
+const BUILD_TS_SNOW="2026-06-26T07:11:57+02:00"; const BUILD_TS_SF=""; // SNOW=čas Snowflake refreshe, SF=čas Salesforce refreshe (prázdné=SF se neaktualizovalo automaticky); každý stampuje scheduled task zvlášť, SF jen při úspěchu
 // ===== per-card razítko poslední aktualizace (vlevo dole) =====
 (function(){
   function pad(n){return ('0'+n).slice(-2);}
   function fmt(d){return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes());}
-  var build=(typeof BUILD_TS!=='undefined'&&BUILD_TS)?new Date(BUILD_TS):null;
-  var stamp=(build&&!isNaN(build.getTime()))?fmt(build):'neznámé';
-  var snowTs='❄ Snowflake · data aktualizována '+stamp;
-  var sfTs='☁ Salesforce · data aktualizována '+stamp;
+  var bSnow=(typeof BUILD_TS_SNOW!=='undefined'&&BUILD_TS_SNOW)?new Date(BUILD_TS_SNOW):null;
+  var bSf=(typeof BUILD_TS_SF!=='undefined'&&BUILD_TS_SF)?new Date(BUILD_TS_SF):null;
+  var snowTs='❄ Snowflake · data aktualizována '+((bSnow&&!isNaN(bSnow.getTime()))?fmt(bSnow):'neznámé');
+  var sfTs=(bSf&&!isNaN(bSf.getTime()))?('☁ Salesforce · data aktualizována '+fmt(bSf)):'☁ Salesforce · ⚠ data se neaktualizují automaticky';
   document.querySelectorAll('.card').forEach(function(card){
     var b=card.querySelector('.srcb'); if(!b)return;
     var d=document.createElement('div'); d.className='cardts '+(b.classList.contains('crm')?'crm':'sf');
