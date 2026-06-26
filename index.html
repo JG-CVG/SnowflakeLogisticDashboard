@@ -1002,7 +1002,7 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
   render('costDE',CA_WEEKLY_COST_DATA_DE,26);
 })();
 
-const BUILD_TS_SNOW="2026-06-26T08:01:46+02:00"; const BUILD_TS_SF="2026-06-26T08:01:46+02:00"; // SNOW=čas Snowflake refreshe, SF=čas Salesforce refreshe (prázdné=SF se neaktualizovalo automaticky); každý stampuje scheduled task zvlášť, SF jen při úspěchu
+const BUILD_TS_SNOW="2026-06-26T08:01:46+02:00"; const BUILD_TS_SF=""; // SNOW=čas Snowflake refreshe, SF=čas Salesforce refreshe (prázdné=SF se neaktualizovalo automaticky); každý stampuje scheduled task zvlášť, SF jen při úspěchu
 // ===== per-card razítko poslední aktualizace (vlevo dole) =====
 (function(){
   function pad(n){return ('0'+n).slice(-2);}
