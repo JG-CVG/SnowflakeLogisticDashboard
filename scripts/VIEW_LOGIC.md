@@ -244,6 +244,25 @@ GROUP BY DAY_ONLY(CA_New_CarAudit_Date__c), CarAudit__r.Reason_Code__c
 
 ---
 
+## PF — Preferred CA Funnel (weekly)  (canvas/table `pf-table`, `const PF`)  ✅ IMPLEMENTOVÁNO 26.06.2026 ❄ Snowflake
+**Zdroj:** ❄ Snowflake (CaseHistory milníky). Skilly: `preferred-ca-funnel-table`, `preferred-ca-weekly`, `preferred-ca-cp-weekly`.
+`const PF=[label, total, 1stCall_closed, CA_closed, inprogress, done, recommended, not_recommended, with_cp, fc_untrusty_cannot]` (10 prvků; ISO týden od W31/25; chronologicky).
+
+### Definice (ověřeno 1:1 proti const — W16/26, W21/26, W24/26 PŘESNĚ)
+- Preferred = `Opportunity_Asset__c.Is_Preferred__c` truthy (join přes `Order__c`). Carvago only (`Order.Instamotion_Customer__c='false'`), bez XK/AL.
+- Case RecordType CarAudit (`0126N000000kDxBQAU`), IsDeleted false.
+- **Milníky z CaseHistory** (`Field`='Status'): done_dt=MAX ts NewValue='CarAudit Done'; closed_dt=MAX 'CarAudit Closed'; last_nv=MAX_BY(NewValue,ts); last_ts=MAX ts. (Car_Audit__c.Case_Status__c je nespolehlivý — NEPOUŽÍVAT.)
+- Kategorie (priorita): done_dt → done; else closed_dt → closed, split dle `LOWER(Car_Audit__c.Status__c)` ∈ {reject new ca, reject car check, reject vin check, reject awaiting selection} → closed_1stcall, jinak closed_caraudit; else last_nv ∈ {Car Check, VIN Check, Awaiting Selection, Auditor Selection, Audit Order, Audit Result, CarAudit Preparation} → inprogress; else skip.
+- Týden = ISO (YEAROFWEEKISO/WEEKISO) z `CONVERT_TIMEZONE('UTC','Europe/Prague', stage_dt)` (done→done_dt, closed→closed_dt, inprogress→last_ts). total = součet 4 kategorií.
+- recommended/not_recommended/with_cp jen pro **done** (dle done-týdne): rec=`LOWER(Reason_Code__c)='approved'`, notrec='not recommended', with_cp = rec & order má Case RecordTypeId='0126N000000kE2BQAU' (Car Purchase).
+- fc_untrusty_cannot = closed_1stcall s `Reason_Code__c='Fault at seller side - Untrusty seller'` AND `Detail_Reason_Code__c='Cannot be contacted'`.
+
+### Implementace
+SQL: `reference/preferred_funnel.sql` — výstup je rovnou hotový `const PF=[...];` (LISTAGG). V refresh tasku krok 2 (Snowflake) spusť a nahraď `const PF=...`.
+Pozn.: ~0,8 % / max ±5 drift vůči logistics (chybí „Is TEST Case" ve Snowflake + živý preferred flag) — uživatel akceptoval (26.06.2026). Settled týdny přesto vychází přesně.
+
+---
+
 ## TODO — pohledy k doplnění do build_sf_views.py (zatím statické) — ROADMAP
 
 Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
@@ -262,7 +281,6 @@ Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
 
 ### ~~CADR — CarAudit Closed reason breakdown (weekly) — Phase 2~~ ✅ HOTOVO 26.06.2026 → viz sekce „CAR2" výše (const CAR2, ne CADR).
 
-### PF — Preferred CA Funnel (weekly) — ❄ Snowflake (Car_Audit__c + History + Opportunity_Asset + Case Car Purchase)
-- Skilly: `preferred-ca-funnel-table`, `preferred-ca-weekly`, `preferred-ca-cp-weekly`. `const PF=[label, total, 1stCall_closed, CA_closed, inprogress, done, recommended, not_recommended, with_cp]`. Funnel buckety dle CA New date; recommended/CP dle CA Done date.
+### ~~PF — Preferred CA Funnel (weekly)~~ ✅ HOTOVO 26.06.2026 → viz sekce „PF" výše (reference/preferred_funnel.sql, ❄ Snowflake). Pozn.: osa = STAGE date (ne CA New), 10. prvek fc_untrusty_cannot.
 
 Postup pro každý: definice sem → funkce do build_sf_views.py (gated na sf_*.json) → SOQL do scheduled tasku `snowflake-dashboard-refresh` → ověřit proti referenci/known value → node --check → commit/push.
