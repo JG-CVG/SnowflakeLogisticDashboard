@@ -156,7 +156,7 @@
     </div>
     <div class="card full" style="border-left:4px solid #ef4444">
       <h2>💸 Seller Payment Backlog — aging (Car Purchase)<span class="srcb crm">☁ Salesforce</span></h2>
-      <div class="sub">Aktivní Car Purchase · zákazník zaplatil, Carvago ještě neposlalo prodejci · 2 témata dle fáze · stáří ≤2 / 3–4 / &gt;4 dny · objem v EUR (firemní kurzy SF) · snapshot 25.06.2026</div>
+      <div class="sub">Aktivní Car Purchase · zákazník zaplatil, Carvago ještě neposlalo prodejci · 2 témata dle fáze · stáří ≤2 / 3–4 / &gt;4 dny · objem v EUR (firemní kurzy SF) · snapshot 26.06.2026</div>
       <div id="seller-backlog"></div>
     </div>
     <div class="card full" style="border-left:4px solid #EAB308">
@@ -1157,9 +1157,9 @@ const AUDSEL_WEEKLY_DATA=[{week:"2024-W51",label:"W51/24",year:2024,week_num:51,
 </script>
 <script>
 (function(){
-  // S1: [name,total,≤2,3-4,>4]  · S2: [...,eurTotal,eurOver]  (snapshot 25.06.2026, SF)
-  const S1=[["DE - Carvago Deutschland GmbH",5,5,0,0],["— (bez Invoicing Company)",3,3,0,0],["NL - Fastback Marketplace NL B.V.",2,2,0,0],["CZ - Carvago s.r.o.",2,0,2,0],["DE - STH Consulting",1,0,0,1]];
-  const S2=[["DE - Carvago Deutschland GmbH",24,6,5,13,646957,380198],["CZ - Carvago s.r.o.",30,13,6,11,569032,229194],["AT - Carvago Österreich GmbH",2,1,1,0,39316,0]];
+  // S1: [name,total,≤2,3-4,>4]  · S2: [...,eurTotal,eurOver]  (snapshot 26.06.2026, SF) — auto z build_sf_views.py
+  const S1=[["CZ - Carvago s.r.o.", 4, 3, 0, 1], ["DE - Carvago Deutschland GmbH", 3, 3, 0, 0], ["DE - STH Consulting", 1, 0, 0, 1]];
+  const S2=[["DE - Carvago Deutschland GmbH", 29, 16, 9, 4, 786265, 137266], ["CZ - Carvago s.r.o.", 30, 17, 7, 6, 554188, 83800], ["NL - Fastback Marketplace NL B.V.", 2, 0, 1, 1, 86731, 65289], ["AT - Carvago Österreich GmbH", 2, 0, 2, 0, 39316, 0], ["PL - Carvago Polska Sp.zo.o.", 1, 1, 0, 0, 28980, 0], ["RO - Carvago Marketplace s. r. l.", 1, 1, 0, 0, 24990, 0], ["IT - Carvago Italia s. r. l.", 1, 1, 0, 0, 21950, 0], ["SE - Carvago Sverige AB", 1, 1, 0, 0, 17339, 0]];
   const FR='#22c55e',WA='#f59e0b',OV='#ef4444',MU='#8b97a8',LN='#222c3c';
   const eur=n=>'€'+Math.round(n).toLocaleString('cs-CZ');
   const sum=(a,i)=>a.reduce((s,e)=>s+(e[i]||0),0);

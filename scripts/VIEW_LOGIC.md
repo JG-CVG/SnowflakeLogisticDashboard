@@ -70,7 +70,56 @@ WHERE RecordTypeId='0126N000000kE2BQAU'
 
 ---
 
+---
+
+## Seller Payment Backlog — aging (Car Purchase)  (container `seller-backlog`, `const S1` + `const S2`)
+**Zdroj:** ☁ Salesforce. **Co zobrazuje:** kde leží peníze — zákazník zaplatil, ale Carvago ještě neposlalo prodejci.
+Dvě sekce, obě seskupené po **Invoicing Company** (Order.Invoicing_Company.Name), aging ≤2 / 3-4 / >4 prac. dny.
+
+### Populace (= stejné filtry reportu jako Active Purchases)
+Car Purchase, Status ∈ 6 aktivních (ne Done/Closed), CreatedDate 2024-01-01..2027-01-01, Is_TEST=false,
+Order.Instamotion=false, Customer Country Origin neobsahuje XK/AL, Account/Contact ∉ interní, CaseNumber≠00034562.
+
+### Dvě sekce
+- **S1 „Máme peníze od zákazníka" (5 polí, bez EUR):** Status ≠ Payment Processing **A** `Order.Is_Contract_Paid__c` je vyplněné (≠ null; je to DATUM, ne boolean!).
+- **S2 „CVG nezaplatilo vendorovi" (7 polí, s EUR):** Status = Payment Processing.
+
+### EUR částka (jen S2)
+`EUR = Order.Car_List_Price__c ÷ kurz(Order.Car_List_Price_Currency__c)`, kde kurzy = SF `CurrencyType.ConversionRate`
+(korporátní měna = EUR, kurz=1; tj. dělením z měny prodejce na EUR). Ověřeno: AT = €39 316 sedí na euro.
+`eur_over` = EUR jen za case ve věku >4 dny.
+
+### Aging
+Pracovní dny (CZ svátky) od data vstupu do **aktuální fáze** (mapování status→CP date pole jako Active Purchases) do dnes.
+Buckety: ≤2 / 3-4 / >4 dny. Případy bez data fáze → bucket >4.
+
+### Formát const (index.html)
+- `S1=[[invoicingCompany, total, ≤2, 3-4, >4], …]`
+- `S2=[[invoicingCompany, total, ≤2, 3-4, >4, eurTotal, eurOver], …]`
+Ověřený stav 26.06.2026: S1 = 8 case (CZ 4 / DE 3 / STH 1) · S2 = 67 case, €1 559 759 k zaplacení (€286 355 po termínu).
+
+### Implementace
+`build_seller_backlog(records, rates)` v `scripts/build_sf_views.py`. Vstupy: `sf_seller.json` (SOQL níže) + `sf_rates.json` (CurrencyType).
+
+### SOQL
+sf_seller.json:
+```
+SELECT Id, Status, Order__r.Invoicing_Company__r.Name, Order__r.Car_List_Price__c, Order__r.Car_List_Price_Currency__c,
+       Order__r.Is_Contract_Paid__c, CP_New_Date__c, CP_Dealer_Contacted_Date__c, CP_Contract_Preparation_Date__c,
+       CP_Awaiting_Approval_Date__c, CP_Contract_Signature_Date__c, CP_Payment_Processing_Date__c
+FROM Case
+WHERE RecordTypeId='0126N000000kE2BQAU'
+  AND Status IN ('New','Dealer Contacted','Contract Preparation','Awaiting Approval','Contract Signature','Payment Processing')
+  AND CreatedDate >= 2024-01-01T00:00:00Z AND CreatedDate < 2027-01-01T00:00:00Z
+  AND Is_TEST_Case__c=false AND Order__r.Instamotion_Customer__c=false
+  AND (NOT Order__r.Customer_Country_Origin__c LIKE '%XK%') AND (NOT Order__r.Customer_Country_Origin__c LIKE '%AL%')
+  AND Account.Name NOT IN ('@carvago','Zářecký','Kohout','Carvago')
+  AND Contact.Name NOT IN ('Zářecký','Zarecky','Kohout','Carvago','carvago')
+  AND CaseNumber != '00034562'
+```
+sf_rates.json: `SELECT IsoCode, ConversionRate FROM CurrencyType WHERE IsActive=true`
+
 ## TODO — pohledy k doplnění do build_sf_views.py (zatím statické)
 FCTOP (1st Call Top-10 Phase 1), CATOP (CarAudit Top-10 Phase 2), CADR (CarAudit reason breakdown weekly),
-CA from seller / Price structure, Doc & Registration, Seller Backlog, Preferred Funnel.
+CA from seller / Price structure, Doc & Registration, Preferred Funnel.
 Postup: definici sem → funkci do build_sf_views.py → SOQL do scheduled tasku → ověřit proti známé hodnotě.

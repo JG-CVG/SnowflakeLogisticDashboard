@@ -6,6 +6,7 @@ Vstupy (v adresari SF_WORK, default $HOME) - zpracuje jen ty, co existuji:
   sf_imca_orders.json + sf_imca_invoices.json -> IMCA (IM Contract Accepted)
   sf_pconv_paid.json + sf_pconv_lost.json     -> PCONV (Preferred konverze)
   sf_cp_active.json -> ROWS (Active Purchases: Car Purchase non-terminal, faze x stari)
+  sf_seller.json + sf_rates.json -> S1/S2 (Seller Payment Backlog: customer paid, CVG nezaplatilo vendorovi)
 """
 import json, re, os
 from datetime import datetime, timedelta, timezone
@@ -128,6 +129,33 @@ def build_active_purchases(records):
         mat[s][_bucket(_busday(d, today))] += 1
     return [dict(status=s, **mat[s]) for s in CP_ORDER]
 
+
+# ---- Seller Payment Backlog (S1 = Is Contract Paid & not PP ; S2 = Payment Processing) ----
+def _sb_eur(o, rates):
+    p=o.get('Car_List_Price__c'); c=o.get('Car_List_Price_Currency__c')
+    if p is None or not c or not rates.get(c): return 0.0
+    return p/rates[c]                       # korporatni mena = EUR (kurz=1) -> delenim na EUR
+def build_seller_backlog(records, rates):
+    from collections import defaultdict
+    today=_dt.datetime.now(PRAGUE).date()
+    def grp(sub, money):
+        d=defaultdict(lambda:[0,0,0,0,0.0,0.0])   # tot, <=2, 3-4, >4, eur, eur_over
+        for r in sub:
+            o=r.get('Order__r') or {}
+            comp=(o.get('Invoicing_Company__r') or {}).get('Name') or '— (bez Invoicing Company)'
+            dv=r.get(CP_DATEFIELD.get(r.get('Status'),''))
+            a=_busday(_dt.date(int(dv[:4]),int(dv[5:7]),int(dv[8:10])), today) if dv else None
+            b=0 if (a is not None and a<=2) else (1 if (a is not None and a<=4) else 2)
+            e=_sb_eur(o,rates); row=d[comp]; row[0]+=1; row[1+b]+=1; row[4]+=e
+            if b==2: row[5]+=e
+        out=[]
+        for comp,row in sorted(d.items(), key=lambda x:-x[1][4]):
+            out.append([comp,row[0],row[1],row[2],row[3]]+([round(row[4]),round(row[5])] if money else []))
+        return out
+    s1=grp([r for r in records if r.get('Status')!='Payment Processing' and (r.get('Order__r') or {}).get('Is_Contract_Paid__c')], False)
+    s2=grp([r for r in records if r.get('Status')=='Payment Processing'], True)
+    return s1, s2
+
 def main():
     html=open('index.html',encoding='utf-8').read(); did=[]
     car=load('sf_caraudit_recent.json')
@@ -147,6 +175,12 @@ def main():
     if cp is not None:
         rows=build_active_purchases(cp['records'])
         html=replace_const(html,'ROWS',json.dumps(rows,ensure_ascii=False)); did.append('ROWS')
+    sb=load('sf_seller.json'); rt=load('sf_rates.json')
+    if sb is not None and rt is not None:
+        rates={x['IsoCode']:x['ConversionRate'] for x in rt['records']}
+        s1,s2=build_seller_backlog(sb['records'], rates)
+        html=replace_const(html,'S1',json.dumps(s1,ensure_ascii=False))
+        html=replace_const(html,'S2',json.dumps(s2,ensure_ascii=False)); did.append('S1/S2')
     open('index.html','w',encoding='utf-8').write(html)
     print("OK | updated:", did)
 if __name__=='__main__': main()
