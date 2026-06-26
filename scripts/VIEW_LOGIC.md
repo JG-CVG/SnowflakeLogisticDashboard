@@ -131,7 +131,28 @@ sf_rates.json: `SELECT IsoCode, ConversionRate FROM CurrencyType WHERE IsActive=
 - **Implementace:** `build_dreg(records)` v build_sf_views.py, vstup `sf_dreg.json`.
 - **SOQL:** `SELECT Kroschke_Registration_Status__c, Coordination_with_Vendor_Date__c, Status__c FROM Documents_and_Registration__c WHERE Order__r.Instamotion_Customer__c=true AND Status__c NOT IN ('car-registration-done','car-registration-closed')`
 
-## TODO — pohledy k doplnění do build_sf_views.py (zatím statické)
-FCTOP (1st Call Top-10 Phase 1), CATOP (CarAudit Top-10 Phase 2), CADR (CarAudit reason breakdown weekly),
-CA from seller / Price structure, Preferred Funnel.
-Postup: definici sem → funkci do build_sf_views.py → SOQL do scheduled tasku → ověřit proti známé hodnotě.
+## TODO — pohledy k doplnění do build_sf_views.py (zatím statické) — ROADMAP
+
+Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
+- **Car_Audit__c**: `Car_inspection_by_Vendor__c` (picklist: "Suitable car" / "Vendor will perform" / "Vendor will not perform"), `CarAudit_Amount__c` (double, EUR bez VAT), `Reason_Code__c` (picklist – Phase reason), `Case_Status__c` (= AKTUÁLNÍ stav, NE milník!), `Status__c` (APPROVED/REJECT ...). Vazba na Case: `Case.CarAudit__r.*`.
+- ⚠️ **POZOR:** `Case_Status__c='CarAudit Done'` vrací ~0 (případ se přes Done posune dál). „CarAudit Done" se MUSÍ rekonstruovat z **CaseHistory** (změna Status → 'CarAudit Done'), stejně jako u skillu `snowflake-caraudit-cost-structure`.
+- CA New date = `Case.CA_New_CarAudit_Date__c`. Reason long-text na Case = `CA_Reason_Code__c` (length 1300 → NELZE GROUP BY).
+
+### PSTR — Price structure (completed CA from seller, % po měsících) — ☁ SF, od 11/25
+- Skill: `price-structure-ca-from-seller`. Filtr: CarAudit **Done** (z CaseHistory) + `CarAudit__r.Car_inspection_by_Vendor__c` vyplněné + `CarAudit__r.CarAudit_Amount__c` číselné (0=Free OK). Měsíc = CA New date. Buckety free/1-100/100-120/120-125/125-145/145+.
+- `const PSTR=[label,free,p1_100,p100_120,p120_125,p125_145,p145plus]`. REFERENCE k ověření: 11/25 → [56,13,6,9,1,0] (n=85, Free 65.9 %); 5/26 n=255.
+
+### SUIT — CA from seller, evaluated as suitable (měsíčně) — ☁ SF, od 12/25
+- `const SUIT=[month, from_seller, total]`. total = CA NE 'REJECT New CA' (Phase 1 první reject) dle CA New date; from_seller = `Car_inspection_by_Vendor__c` vyplněné. Ověř proti SUIT v index.html (6/26: 834/1319). Vysoký objem → stránkování.
+
+### FCTOP / CATOP — Top-10 reason (Phase 1 / Phase 2) — 3 období (měsíc/YTD/loni)
+- Skilly: `fc-closed-top-reasons` (Phase 1), `ca-closed-top-reasons` (Phase 2). Reason = `CA_Reason_Code__c` (Case) NEBO `CarAudit__r.Reason_Code__c`. Phase 1 rejecty {REJECT New CA, Data Validation, Car Check, VIN Check}; Phase 2 = ostatní rejecty. Long-text → NELZE GROUP BY: stáhni řádky a agreguj v Pythonu; >2000/období → stránkovat (ORDER BY + Id cursor).
+- `const FCTOP/CATOP=[[reason, m_cur, ytd, prev], ...]` top ~12-15.
+
+### CADR — CarAudit Closed reason breakdown (weekly) — Phase 2
+- `const CADR=[[week, count, ?], ...]` (ověř formát v index.html ~ř.851). Phase 2 closed po týdnech dle CA New date.
+
+### PF — Preferred CA Funnel (weekly) — ❄ Snowflake (Car_Audit__c + History + Opportunity_Asset + Case Car Purchase)
+- Skilly: `preferred-ca-funnel-table`, `preferred-ca-weekly`, `preferred-ca-cp-weekly`. `const PF=[label, total, 1stCall_closed, CA_closed, inprogress, done, recommended, not_recommended, with_cp]`. Funnel buckety dle CA New date; recommended/CP dle CA Done date.
+
+Postup pro každý: definice sem → funkce do build_sf_views.py (gated na sf_*.json) → SOQL do scheduled tasku `snowflake-dashboard-refresh` → ověřit proti referenci/known value → node --check → commit/push.
