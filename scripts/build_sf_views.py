@@ -12,6 +12,7 @@ Vstupy (v adresari SF_WORK, default $HOME) - zpracuje jen ty, co existuji:
   sf_suit_total.json + sf_suit_seller.json -> SUIT (CA from seller evaluated as suitable, mesicne; [m/yy,fromSeller,total]; od 12/25)
   sf_fctop_{normal,detail,lost,neither}.json -> FCTOP (1st Call Closed Top reasons, Phase 1; [reason,m_cur,ytd,prev])
   sf_catop_{normal,detail,lost,neither}.json -> CATOP (CarAudit Closed Top reasons, Phase 2; [reason,m_cur,ytd,prev])
+  sf_car2.json -> CAR2 (CarAudit Closed reason breakdown weekly, Phase 2; [wk,car_na,car_cond,seller,auto,client,carvago,other])
 """
 import json, re, os
 from datetime import datetime, timedelta, timezone
@@ -255,6 +256,35 @@ def build_top_reasons(normal, detail, lost, neither, topn=15):
     rows.sort(key=lambda x:(-x[2],-x[3],-x[1]))
     return rows[:topn]
 
+
+# ---- CAR2 (CarAudit Closed reason breakdown, weekly, Phase 2) ----
+# Vstup = denni agregace {d:'YYYY-MM-DD', rc:CarAudit__r.Reason_Code__c, c}. ISO tyden + kategorie (map_reason_ca).
+# Phase 2 filtr je v SOQL. Kategorie dle compute_all.py map_reason_ca (poradi check DULEZITE).
+def _map_reason_ca(reason):
+    r=str(reason).strip().lower()
+    if 'car not available' in r or 'no longer online' in r or 'not for b2b sale' in r: return 'car_na'
+    if 'fault at client' in r or 'client' in r: return 'client'
+    if 'fault in car condition' in r or 'car was damaged' in r or 'damaged or with faults' in r or 'not recommended' in r: return 'car_cond'
+    if 'fault at seller' in r or 'don\u00b4t selling' in r or "doesn't cooperate" in r or 'don\u00b4t cooperate' in r or 'wrong pricing' in r or 'untrusty' in r: return 'seller'
+    if 'automatically reject' in r or 'closed order' in r: return 'auto'
+    if 'carvago decision' in r: return 'carvago'
+    return 'other'
+CAR2_CATS=['car_na','car_cond','seller','auto','client','carvago','other']
+def build_car2(records):
+    from collections import defaultdict
+    wk=defaultdict(lambda: defaultdict(int))
+    for rec in records:
+        d=rec.get('d');
+        if not d: continue
+        iso=_dt.date(int(d[:4]),int(d[5:7]),int(d[8:10])).isocalendar()
+        iy,iw=iso[0],iso[1]
+        wk[(iy*100+iw, f"{iw}/{str(iy)[2:]}")][_map_reason_ca(rec.get('rc'))]+=rec['c']
+    rows=[]
+    for (sk,lab) in sorted(wk):
+        c=wk[(sk,lab)]
+        rows.append([lab]+[c.get(k,0) for k in CAR2_CATS])
+    return rows
+
 def main():
     html=open('index.html',encoding='utf-8').read(); did=[]
     car=load('sf_caraudit_recent.json')
@@ -320,6 +350,14 @@ def main():
         else:
             html=replace_const(html,'CATOP',json.dumps(rows,ensure_ascii=False))
             did.append('CATOP')
+    c2=load('sf_car2.json')
+    if c2 is not None:
+        car2=build_car2(c2['records'])
+        if sum(sum(r[1:]) for r in car2) < 200:
+            print('WARN CAR2: <200 -> PRESKAKUJI')
+        else:
+            html=replace_const(html,'CAR2',json.dumps(car2,ensure_ascii=False).replace(' ',''))
+            did.append('CAR2')
     open('index.html','w',encoding='utf-8').write(html)
     print("OK | updated:", did)
 if __name__=='__main__': main()
