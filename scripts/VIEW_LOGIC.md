@@ -119,7 +119,19 @@ WHERE RecordTypeId='0126N000000kE2BQAU'
 ```
 sf_rates.json: `SELECT IsoCode, ConversionRate FROM CurrencyType WHERE IsActive=true`
 
+---
+
+## Instamotion — Active Document & Registration Cases  (canvas `dreg`, `const DREG`)
+**Zdroj:** ☁ Salesforce, objekt **Documents_and_Registration__c** (ne Case). **Co zobrazuje:** aktivní registrační případy Instamotion dle Kroschke statusu × stáří.
+- **Populace:** `Order__r.Instamotion_Customer__c=true` AND `Status__c` NOT IN (car-registration-done, car-registration-closed) AND Kroschke status nezačíná „0/0" (vyřazuje *storniert/gelöscht* a *Klärfall beendet* = neaktivní).
+- **Formát:** `DREG=[[kroschke_idx, "YYYY-MM-DD"], …]`, kde datum = `Coordination_with_Vendor_Date__c`.
+- **kroschke_idx** (mapování `Kroschke_Registration_Status__c`): 2/6 wartet auf Zulassungsunterlagen→0 · 3/6 Bearbeitung durch Kroschke→1 · 4/6 Weitergeleitet an Zulassungsdienst→2 · 5/6 Eingegangen beim Zulassungsdienst→3 · ostatní (null, Request Sent, 1/6…)→4 „Bez statusu".
+- **Aging** (počítá JS na dashboardu): pracovní dny od Coordination with Vendor do dnes, buckety 0–5 / 6–10 / 11–15 / 16–20 / >20 WD.
+- Ověřeno 26.06.2026: 56 aktivních (2/6=31, 3/6=2, 4/6=13, 5/6=7, Bez statusu=3).
+- **Implementace:** `build_dreg(records)` v build_sf_views.py, vstup `sf_dreg.json`.
+- **SOQL:** `SELECT Kroschke_Registration_Status__c, Coordination_with_Vendor_Date__c, Status__c FROM Documents_and_Registration__c WHERE Order__r.Instamotion_Customer__c=true AND Status__c NOT IN ('car-registration-done','car-registration-closed')`
+
 ## TODO — pohledy k doplnění do build_sf_views.py (zatím statické)
 FCTOP (1st Call Top-10 Phase 1), CATOP (CarAudit Top-10 Phase 2), CADR (CarAudit reason breakdown weekly),
-CA from seller / Price structure, Doc & Registration, Preferred Funnel.
+CA from seller / Price structure, Preferred Funnel.
 Postup: definici sem → funkci do build_sf_views.py → SOQL do scheduled tasku → ověřit proti známé hodnotě.

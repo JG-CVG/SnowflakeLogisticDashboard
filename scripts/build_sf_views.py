@@ -6,7 +6,8 @@ Vstupy (v adresari SF_WORK, default $HOME) - zpracuje jen ty, co existuji:
   sf_imca_orders.json + sf_imca_invoices.json -> IMCA (IM Contract Accepted)
   sf_pconv_paid.json + sf_pconv_lost.json     -> PCONV (Preferred konverze)
   sf_cp_active.json -> ROWS (Active Purchases: Car Purchase non-terminal, faze x stari)
-  sf_seller.json + sf_rates.json -> S1/S2 (Seller Payment Backlog: customer paid, CVG nezaplatilo vendorovi)
+  sf_seller.json + sf_rates.json -> S1/S2 (Seller Payment Backlog)
+  sf_dreg.json -> DREG (Instamotion Document & Registration: aktivni dle Kroschke statusu, [idx,date])
 """
 import json, re, os
 from datetime import datetime, timedelta, timezone
@@ -156,6 +157,25 @@ def build_seller_backlog(records, rates):
     s2=grp([r for r in records if r.get('Status')=='Payment Processing'], True)
     return s1, s2
 
+
+# ---- Doc & Registration (Instamotion) : [kroschke_idx, coordination_date] ----
+DREG_KROSCHKE_IDX = {
+  "2/6 wartet auf Zulassungsunterlagen":0,   # 2/6 Waiting For Reg. Documents
+  "3/6 Bearbeitung durch Kroschke":1,         # 3/6 Bearbeitung durch Kroschke
+  "4/6 Weitergeleitet an Zulassungsdienst":2, # 4/6 Forwarded To Reg. Service
+  "5/6 Eingegangen beim Zulassungsdienst":3}  # 5/6 Received By Reg. Service
+def build_dreg(records):
+    out=[]
+    for r in records:
+        st=r.get('Status__c')
+        if st in ('car-registration-done','car-registration-closed'): continue   # ne-aktivni
+        k=r.get('Kroschke_Registration_Status__c')
+        if k and k.startswith('0/0'): continue   # storniert / Klarfall beendet = neaktivni
+        dv=r.get('Coordination_with_Vendor_Date__c')
+        if not dv: continue
+        out.append([DREG_KROSCHKE_IDX.get(k,4), dv[:10]])   # else -> 4 = "Bez statusu"
+    return out
+
 def main():
     html=open('index.html',encoding='utf-8').read(); did=[]
     car=load('sf_caraudit_recent.json')
@@ -181,6 +201,10 @@ def main():
         s1,s2=build_seller_backlog(sb['records'], rates)
         html=replace_const(html,'S1',json.dumps(s1,ensure_ascii=False))
         html=replace_const(html,'S2',json.dumps(s2,ensure_ascii=False)); did.append('S1/S2')
+    dr=load('sf_dreg.json')
+    if dr is not None:
+        dreg=build_dreg(dr['records'])
+        html=replace_const(html,'DREG',json.dumps(dreg,ensure_ascii=False)); did.append('DREG')
     open('index.html','w',encoding='utf-8').write(html)
     print("OK | updated:", did)
 if __name__=='__main__': main()
