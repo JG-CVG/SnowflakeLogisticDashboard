@@ -1122,12 +1122,12 @@ const AUDSEL_WEEKLY_DATA=[{week:"2024-W51",label:"W51/24",year:2024,week_num:51,
 (function(){
   const BK=[["b02","≤2 dny","#22c55e"],["b23","2\u20133","#84cc16"],["b35","3\u20135","#eab308"],["b510","5\u201310","#f97316"],["b10","10+","#ef4444"]];
   const ROWS=[
-    {status:"New",b02:48,b23:26,b35:46,b510:17,b10:410},
-    {status:"Dealer Contacted",b02:6,b23:2,b35:2,b510:3,b10:5},
-    {status:"Contract Preparation",b02:4,b23:2,b35:1,b510:0,b10:8},
-    {status:"Awaiting Approval",b02:0,b23:0,b35:0,b510:0,b10:0},
+    {status:"New",b02:11,b23:2,b35:7,b510:0,b10:399},
+    {status:"Dealer Contacted",b02:5,b23:0,b35:1,b510:3,b10:5},
+    {status:"Contract Preparation",b02:3,b23:2,b35:1,b510:0,b10:8},
+    {status:"Awaiting Approval",b02:1,b23:0,b35:0,b510:0,b10:0},
     {status:"Contract Signature",b02:0,b23:0,b35:0,b510:0,b10:10},
-    {status:"Payment Processing",b02:24,b23:14,b35:27,b510:14,b10:5}
+    {status:"Payment Processing",b02:20,b23:10,b35:22,b510:12,b10:3}
   ];
   const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';};
   const rowTot=r=>BK.reduce((s,b)=>s+r[b[0]],0);
