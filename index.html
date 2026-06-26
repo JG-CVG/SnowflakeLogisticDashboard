@@ -64,7 +64,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div><h1>Carvago — Logistics Dashboard</h1><div class="src">Orders by Month · prototyp nové verze (nejnovější měsíc vlevo)</div><button onclick="var e=document.getElementById('avgp-card');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})" title="Skočit na graf průměrné ceny CarAuditu" style="display:inline-block;margin-top:9px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);color:#7dd3fc;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">💶 Cena za 1 CA ↓</button></div>
+    <div><h1>Carvago — Logistics Dashboard</h1><div class="src">Orders by Month · prototyp nové verze (nejnovější měsíc vlevo)</div><button onclick="var e=document.getElementById('avgp-card');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})" title="Skočit na graf průměrné ceny CarAuditu" style="display:inline-block;margin-top:9px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);color:#7dd3fc;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">💶 Cena za 1 CA ↓</button><button onclick="var e=document.getElementById('trans-card');if(e)e.scrollIntoView({behavior:'smooth',block:'start'})" title="Skočit na graf Transport — zisk/ztráta" style="display:inline-block;margin-top:9px;margin-left:6px;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);color:#7dd3fc;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">🚚 Transport ↓</button></div>
     <div style="text-align:right">
       <span class="pill">● data přímo ze Snowflake</span>
       <div class="src" id="snow-refresh" style="margin-top:7px;line-height:1.5"></div>
@@ -149,8 +149,8 @@
       <div class="sub">Aktivní případy dle Kroschke statusu · stáří v prac. dnech od Coordination with Vendor · ze Salesforce</div>
       <div class="chartbox"><canvas id="dreg"></canvas></div>
     </div>
-    <div class="card full">
-      <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px">🚚 Transport — Avg Profit/Loss per Transport (EUR) <span class="srcb sf">❄ Snowflake</span> <span id="trans-ytd" style="font-size:13px;font-weight:700;padding:4px 12px;border-radius:8px"></span></h2>
+    <div class="card full" id="trans-card">
+      <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">🚚 Transport — Avg Profit/Loss per Transport (EUR) <span class="srcb sf">❄ Snowflake</span> <span id="trans-ytd" style="font-size:13px;font-weight:700;padding:4px 12px;border-radius:8px"></span></span><button onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Zpět na začátek stránky" style="flex:none;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);color:#7dd3fc;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer">↑ Nahoru</button></h2>
       <div class="sub">Výběr „Dovoz" − náklady (FirstMile + LastMile) · Carvago, completed, bez test, bez XK/AL · měsíc dle CA Accepted Date · ze Snowflake</div>
       <div class="chartbox" style="height:330px"><canvas id="trans"></canvas></div>
     </div>
