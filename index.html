@@ -1,4 +1,4 @@
-<!-- auto-refresh build 2026-06-26T08:42:06+02:00 -->
+<!-- auto-refresh build 2026-06-26T08:43:46+02:00 -->
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -664,9 +664,7 @@ const PF=[["W31/25",146,59,25,0,62,55,7,33,5],["W32/25",221,90,54,0,77,64,13,43,
 
 // ===== Cebia CarAudits — In Progress / Done / Closed (monthly) =====
 // [ym, inprogress, done, closed]  (chronologicky) · Case RecordType Cebia_CarAudit, měsíc dle CreatedDate
-const CEBIA=[
- ["2026-02",0,2,0],["2026-03",0,60,8],["2026-04",0,41,5],["2026-05",0,65,10],["2026-06",9,42,8]
-];
+const CEBIA=[["2026-02",0,2,0],["2026-03",0,60,8],["2026-04",0,41,5],["2026-05",0,65,10],["2026-06",9,49,11]];
 (function(){
   const rows=CEBIA.slice().reverse(); // nejnovější vlevo
   const labs=rows.map(r=>{const p=r[0].split('-');return MON[+p[1]-1]+' '+p[0].slice(2);});
@@ -985,7 +983,7 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
   render('costDE',CA_WEEKLY_COST_DATA_DE,26);
 })();
 
-const BUILD_TS_SNOW="2026-06-26T08:42:06+02:00"; const BUILD_TS_SF="2026-06-26T08:33:25+02:00"; // SNOW=čas Snowflake refreshe, SF=čas Salesforce refreshe (prázdné=SF se neaktualizovalo automaticky); každý stampuje scheduled task zvlášť, SF jen při úspěchu
+const BUILD_TS_SNOW="2026-06-26T08:43:46+02:00"; const BUILD_TS_SF="2026-06-26T08:33:25+02:00"; // SNOW=čas Snowflake refreshe, SF=čas Salesforce refreshe (prázdné=SF se neaktualizovalo automaticky); každý stampuje scheduled task zvlášť, SF jen při úspěchu
 // ===== per-card razítko poslední aktualizace (vlevo dole) =====
 (function(){
   function pad(n){return ('0'+n).slice(-2);}
