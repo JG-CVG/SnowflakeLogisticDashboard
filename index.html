@@ -264,7 +264,7 @@
     </div>
     <div class="card full">
       <h2>🛒 Carvago Purchasing — Active Purchases<span class="srcb crm">☁ Salesforce</span></h2>
-      <div class="sub">Probíhající nákupy vozů (Car Purchase) dle fáze × stáří · stáří = pracovní dny v aktuální fázi · bez Done/Closed · snapshot z CP reportu 22.06.2026 (CP date pole nejsou ve Snowflake extraktu)</div>
+      <div class="sub">Probíhající nákupy vozů (Car Purchase) dle fáze × stáří · stáří = pracovní dny v aktuální fázi · bez Done/Closed · snapshot z CP reportu 26.06.2026 (CP date pole nejsou ve Snowflake extraktu)</div>
       <div id="active-purchases"></div>
     </div>
     <div class="card full" style="position:relative">
@@ -1121,14 +1121,7 @@ const AUDSEL_WEEKLY_DATA=[{week:"2024-W51",label:"W51/24",year:2024,week_num:51,
 <script>
 (function(){
   const BK=[["b02","≤2 dny","#22c55e"],["b23","2\u20133","#84cc16"],["b35","3\u20135","#eab308"],["b510","5\u201310","#f97316"],["b10","10+","#ef4444"]];
-  const ROWS=[
-    {status:"New",b02:11,b23:2,b35:7,b510:0,b10:399},
-    {status:"Dealer Contacted",b02:5,b23:0,b35:1,b510:3,b10:5},
-    {status:"Contract Preparation",b02:3,b23:2,b35:1,b510:0,b10:8},
-    {status:"Awaiting Approval",b02:1,b23:0,b35:0,b510:0,b10:0},
-    {status:"Contract Signature",b02:0,b23:0,b35:0,b510:0,b10:10},
-    {status:"Payment Processing",b02:20,b23:10,b35:22,b510:12,b10:3}
-  ];
+  const ROWS=[{"status": "New", "b02": 6, "b23": 1, "b35": 1, "b510": 0, "b10": 0}, {"status": "Dealer Contacted", "b02": 8, "b23": 0, "b35": 1, "b510": 3, "b10": 0}, {"status": "Contract Preparation", "b02": 3, "b23": 2, "b35": 1, "b510": 0, "b10": 0}, {"status": "Awaiting Approval", "b02": 0, "b23": 0, "b35": 0, "b510": 0, "b10": 0}, {"status": "Contract Signature", "b02": 0, "b23": 0, "b35": 0, "b510": 0, "b10": 0}, {"status": "Payment Processing", "b02": 21, "b23": 10, "b35": 19, "b510": 12, "b10": 2}];
   const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';};
   const rowTot=r=>BK.reduce((s,b)=>s+r[b[0]],0);
   const grand=ROWS.reduce((s,r)=>s+rowTot(r),0);

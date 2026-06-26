@@ -5,6 +5,7 @@ Vstupy (v adresari SF_WORK, default $HOME) - zpracuje jen ty, co existuji:
   sf_caraudit_recent.json  -> FC1 (1st Call) + CA1 (CarAudit) weekly  [Case: CA_New_CarAudit_Date__c, CA_Awaiting_Selection_Date__c, CarAudit_Status__c, Status]
   sf_imca_orders.json + sf_imca_invoices.json -> IMCA (IM Contract Accepted)
   sf_pconv_paid.json + sf_pconv_lost.json     -> PCONV (Preferred konverze)
+  sf_cp_active.json -> ROWS (Active Purchases: Car Purchase non-terminal, faze x stari)
 """
 import json, re, os
 from datetime import datetime, timedelta, timezone
@@ -88,6 +89,45 @@ def build_pconv(paid, lost):
         rows.append(["%04d-%02d"%(y,m),P.get((y,m),0),L.get((y,m),0)])
     return rows
 
+
+# ---- Active Purchases (Car Purchase, faze x stari) ----
+import datetime as _dt
+# CZ statni svatky (rozsah pro busday vypocet stari aktivni faze)
+CZ_HOL = {d for d in [
+  "2025-01-01","2025-04-18","2025-04-21","2025-05-01","2025-05-08","2025-07-05","2025-07-06","2025-09-28","2025-10-28","2025-11-17","2025-12-24","2025-12-25","2025-12-26",
+  "2026-01-01","2026-04-03","2026-04-06","2026-05-01","2026-05-08","2026-07-05","2026-07-06","2026-09-28","2026-10-28","2026-11-17","2026-12-24","2026-12-25","2026-12-26",
+  "2027-01-01","2027-03-26","2027-03-29","2027-05-01","2027-05-08","2027-07-05","2027-07-06","2027-09-28","2027-10-28","2027-11-17","2027-12-24","2027-12-25","2027-12-26"]}
+CP_DATEFIELD = {
+  "New":"CP_New_Date__c","Dealer Contacted":"CP_Dealer_Contacted_Date__c",
+  "Contract Preparation":"CP_Contract_Preparation_Date__c","Awaiting Approval":"CP_Awaiting_Approval_Date__c",
+  "Contract Signature":"CP_Contract_Signature_Date__c","Payment Processing":"CP_Payment_Processing_Date__c"}
+CP_ORDER = ["New","Dealer Contacted","Contract Preparation","Awaiting Approval","Contract Signature","Payment Processing"]
+def _busday(start, end):
+    # pracovni dny v [start, end) mimo vikendy a CZ_HOL (jako np.busday_count)
+    if start >= end: return 0
+    cnt=0; d=start
+    while d < end:
+        if d.weekday() < 5 and d.isoformat() not in CZ_HOL: cnt+=1
+        d += _dt.timedelta(days=1)
+    return cnt
+def _bucket(a):
+    if a < 2:  return "b02"
+    if a < 3:  return "b23"
+    if a < 5:  return "b35"
+    if a < 10: return "b510"
+    return "b10"
+def build_active_purchases(records):
+    today = _dt.datetime.now(PRAGUE).date()
+    mat = {s:{"b02":0,"b23":0,"b35":0,"b510":0,"b10":0} for s in CP_ORDER}
+    for r in records:
+        s = r.get("Status")
+        if s not in mat: continue
+        dv = r.get(CP_DATEFIELD[s])
+        if not dv: continue   # bez data aktualni faze -> preskoc (skipped_no_date)
+        d = _dt.date(int(dv[:4]), int(dv[5:7]), int(dv[8:10]))
+        mat[s][_bucket(_busday(d, today))] += 1
+    return [dict(status=s, **mat[s]) for s in CP_ORDER]
+
 def main():
     html=open('index.html',encoding='utf-8').read(); did=[]
     car=load('sf_caraudit_recent.json')
@@ -103,6 +143,10 @@ def main():
     if pp is not None and pl is not None:
         pconv=build_pconv(pp['records'], pl['records'])
         html=replace_const(html,'PCONV',json.dumps(pconv,ensure_ascii=False).replace(' ','')); did.append('PCONV')
+    cp=load('sf_cp_active.json')
+    if cp is not None:
+        rows=build_active_purchases(cp['records'])
+        html=replace_const(html,'ROWS',json.dumps(rows,ensure_ascii=False)); did.append('ROWS')
     open('index.html','w',encoding='utf-8').write(html)
     print("OK | updated:", did)
 if __name__=='__main__': main()
