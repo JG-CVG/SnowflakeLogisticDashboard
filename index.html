@@ -732,21 +732,21 @@ stackedWeekly('fcr',FCR,[['Car not available','#3b82f6',1],['Fault at client','#
 
 // ===== 1st Call Closed — Top 10 Reasons (Phase 1) =====  [reason, m_cur, ytd, prev]
 const FCTOP=[
- ["Closed Order, automatically reject",159,1224,1283],
- ["Car not available - Sold or reserved for another customer",145,913,1615],
- ["Fault at seller side - Untrusty seller",64,825,574],
- ["Fault in car condition - Car was damaged in history",65,551,1005],
- ["Car not available - Advertisement is no longer online",47,493,669],
- ["Fault at seller side - Wrong pricing - Price only for financing",42,354,498],
- ["Fault in car condition - Car is damaged or with faults",27,224,689],
- ["Fault at seller side - Car not available for sale (in commision, still using, dummy ad., etc.)",28,204,182],
- ["Fault at seller side – Don´t selling cars for B2B – No B2B, only for B2C",16,133,159],
- ["Fault at seller side -  Wrong pricing - Price without VAT",10,100,191],
- ["Carvago decision - Car with risk of claim (or another reason)",0,87,236],
- ["Fault at seller side - Don´t cooperate at inspection or denial inspection",14,80,204],
- ["Fault at seller side -  Wrong pricing - Unreal price (auction, operative leasing, etc.)",2,62,154],
- ["Fault at seller side - Untrusty Car",21,55,78],
- ["Fault at seller side – Don´t selling cars for B2B – Selective vehicle (junge sterne, ect.)",9,53,62]
+ ["Car not available - Sold or reserved for another customer", 183, 951, 1618],
+ ["Closed Order, automatically reject", 138, 892, 951],
+ ["Fault at seller side - Untrusty seller", 80, 841, 576],
+ ["Fault in car condition - Car was damaged in history", 78, 566, 1006],
+ ["Car not available - Advertisement is no longer online", 52, 498, 673],
+ ["Fault at seller side - Wrong pricing - Price only for financing", 43, 355, 499],
+ ["Fault in car condition - Car is damaged or with faults", 29, 226, 690],
+ ["Fault at seller side - Car not available for sale (in commision, still using, dummy ad., etc.)", 37, 213, 185],
+ ["Chosen another car from Carvago", 17, 161, 134],
+ ["Fault at seller side – Don´t selling cars for B2B – No B2B, only for B2C", 16, 133, 159],
+ ["Lost based on Sales Lifecycle/Opportunity", 26, 130, 131],
+ ["Fault at seller side -  Wrong pricing - Price without VAT", 10, 100, 193],
+ ["Carvago decision - Car with risk of claim (or another reason)", 0, 87, 237],
+ ["Fault at seller side - Don´t cooperate at inspection or denial inspection", 14, 80, 204],
+ ["Fault at seller side -  Wrong pricing - Unreal price (auction, operative leasing, etc.)", 3, 63, 155]
 ];
 (function(){
   const PAL=['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#3b82f6','#6366f1','#8b5cf6','#a855f7','#ec4899','#94a3b8'];
@@ -796,18 +796,21 @@ stackedWeekly('car2',CAR2,[['Car not available','#ef4444',1],['Car condition','#
 
 // ===== CarAudit Closed — Top 10 Reasons (Phase 2) =====  [reason, m_cur, ytd, prev] (mapped: auto-closed -> Order Sales LOST reason)
 const CATOP=[
- ["Closed Order, automatically reject",104,822,726],
- ["Car not available - Sold or reserved for another customer",62,478,609],
- ["Fault at seller side - Don't cooperate at inspection or denial inspection",12,121,82],
- ["Lost based on Sales Lifecycle/Opportunity",17,76,124],
- ["Chosen another car from Carvago",3,71,75],
- ["Fault at client side - Car don't have Must have equipment",8,39,87],
- ["Fault at seller side - Untrusty seller",3,26,20],
- ["Carvago decision - Car with risk of claim (or another reason)",4,19,19],
- ["Auditor not available",5,10,8],
- ["CAR not available",1,7,15],
- ["CA not accepted - Bought somewhere else",0,4,5],
- ["Fault at seller side - Untrusty Car",1,3,4]
+ ["Closed Order, automatically reject", 133, 854, 732],
+ ["Car not available - Sold or reserved for another customer", 78, 495, 627],
+ ["Fault at seller side - Don´t cooperate at inspection or denial inspection", 14, 125, 83],
+ ["Lost based on Sales Lifecycle/Opportunity", 18, 77, 125],
+ ["Chosen another car from Carvago", 6, 76, 78],
+ ["Fault at client side - Car don´t have “Must have” equipment", 8, 39, 88],
+ ["Fault at seller side - Untrusty seller", 3, 27, 20],
+ ["Carvago decision - Car with risk of claim (or another reason)", 4, 19, 19],
+ ["Auditor not available", 5, 10, 8],
+ ["CAR not available", 1, 7, 17],
+ ["CA not accepted - Bought somewhere else", 0, 4, 5],
+ ["Fault at seller side - Untrusty Car", 1, 3, 4],
+ ["Fault at client side - customer cancelled order", 0, 2, 88],
+ ["CAR not recommended", 1, 2, 4],
+ ["Fault at Seller´s side - Equipment", 0, 2, 4]
 ];
 (function(){
   const PAL=['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#3b82f6','#6366f1','#8b5cf6','#a855f7','#ec4899','#94a3b8'];

@@ -10,6 +10,8 @@ Vstupy (v adresari SF_WORK, default $HOME) - zpracuje jen ty, co existuji:
   sf_dreg.json -> DREG (Instamotion Document & Registration: aktivni dle Kroschke statusu, [idx,date])
   sf_pstr.json -> PSTR (Price structure completed CA from seller, % po mesicich; [m/yy,free,p1_100,p100_120,p120_125,p125_145,p145plus])
   sf_suit_total.json + sf_suit_seller.json -> SUIT (CA from seller evaluated as suitable, mesicne; [m/yy,fromSeller,total]; od 12/25)
+  sf_fctop_{normal,detail,lost,neither}.json -> FCTOP (1st Call Closed Top reasons, Phase 1; [reason,m_cur,ytd,prev])
+  sf_catop_{normal,detail,lost,neither}.json -> CATOP (CarAudit Closed Top reasons, Phase 2; [reason,m_cur,ytd,prev])
 """
 import json, re, os
 from datetime import datetime, timedelta, timezone
@@ -225,6 +227,34 @@ def build_suit(seller, total):
         rows.append([f"{m}/{str(y)[2:]}", S.get((y,m),0), T.get((y,m),0)])
     return rows
 
+
+# ---- FCTOP / CATOP (Top reasons, Phase 1 / Phase 2; [reason, m_cur, ytd, prev]) ----
+# Efektivni duvod (= compute_all.py get_effective_reason) je rozlozen do 4 groupable aggregate SOQL:
+#   normal  = CarAudit__r.Reason_Code__c (rc), kde rc != 'Closed Order, automatically reject'
+#   detail  = auto-reject + Detail_Reason_Code__c (dr) vyplneno  -> efektivni = dr
+#   lost    = auto-reject + Detail=null + Order Sales LOST (sl)  -> efektivni = sl
+#   neither = auto-reject + Detail=null + SalesLOST=null         -> efektivni = 'Closed Order, automatically reject'
+# Obdobi dle CA New date: m_cur = aktualni mesic, ytd = aktualni rok, prev = predchozi rok. Top 15 dle ytd.
+AUTO_REJECT='Closed Order, automatically reject'
+def build_top_reasons(normal, detail, lost, neither, topn=15):
+    from collections import defaultdict
+    now=_dt.datetime.now(PRAGUE).date(); cy,cm,py=now.year,now.month,now.year-1
+    per=defaultdict(lambda: defaultdict(int))     # (yr,mo)->reason->count
+    for r in normal:  per[(r['yr'],r['mo'])][r['rc']]+=r['c']
+    for r in detail:  per[(r['yr'],r['mo'])][r['dr']]+=r['c']
+    for r in lost:    per[(r['yr'],r['mo'])][r['sl']]+=r['c']
+    for r in neither: per[(r['yr'],r['mo'])][AUTO_REJECT]+=r['c']
+    mcur=defaultdict(int); ytd=defaultdict(int); prev=defaultdict(int)
+    for (y,m),d in per.items():
+        for reason,c in d.items():
+            if y==cy and m==cm: mcur[reason]+=c
+            if y==cy: ytd[reason]+=c
+            if y==py: prev[reason]+=c
+    reasons=set(mcur)|set(ytd)|set(prev)
+    rows=[[r,mcur.get(r,0),ytd.get(r,0),prev.get(r,0)] for r in reasons]
+    rows.sort(key=lambda x:(-x[2],-x[3],-x[1]))
+    return rows[:topn]
+
 def main():
     html=open('index.html',encoding='utf-8').read(); did=[]
     car=load('sf_caraudit_recent.json')
@@ -272,6 +302,24 @@ def main():
         else:
             html=replace_const(html,'SUIT',json.dumps(suit,ensure_ascii=False).replace(' ',''))
             did.append('SUIT')
+    fctop_n=load('sf_fctop_normal.json'); fctop_d=load('sf_fctop_detail.json'); fctop_l=load('sf_fctop_lost.json'); fctop_x=load('sf_fctop_neither.json')
+    if fctop_n is not None and fctop_d is not None and fctop_l is not None and fctop_x is not None:
+        rows=build_top_reasons(fctop_n['records'],fctop_d['records'],fctop_l['records'],fctop_x['records'])
+        tot=sum(r[2] for r in rows)
+        if tot < 200:
+            print('WARN FCTOP: ytd total',tot,'(<200) -> PRESKAKUJI')
+        else:
+            html=replace_const(html,'FCTOP',json.dumps(rows,ensure_ascii=False))
+            did.append('FCTOP')
+    catop_n=load('sf_catop_normal.json'); catop_d=load('sf_catop_detail.json'); catop_l=load('sf_catop_lost.json'); catop_x=load('sf_catop_neither.json')
+    if catop_n is not None and catop_d is not None and catop_l is not None and catop_x is not None:
+        rows=build_top_reasons(catop_n['records'],catop_d['records'],catop_l['records'],catop_x['records'])
+        tot=sum(r[2] for r in rows)
+        if tot < 200:
+            print('WARN CATOP: ytd total',tot,'(<200) -> PRESKAKUJI')
+        else:
+            html=replace_const(html,'CATOP',json.dumps(rows,ensure_ascii=False))
+            did.append('CATOP')
     open('index.html','w',encoding='utf-8').write(html)
     print("OK | updated:", did)
 if __name__=='__main__': main()

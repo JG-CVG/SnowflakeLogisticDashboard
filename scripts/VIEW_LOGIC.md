@@ -194,6 +194,31 @@ Ověřený stav (live 26.06.2026): 12/25 300/944 · 1/26 393/1133 · 2/26 450/11
 
 ---
 
+## FCTOP / CATOP — Top reasons Phase 1 / Phase 2 (3 období)  (canvas `fctop-tables`/`catop-tables`, `const FCTOP`/`CATOP`)  ✅ IMPLEMENTOVÁNO 26.06.2026
+**Zdroj:** ☁ Salesforce (deterministicky; FCTOP byl dříve ❄ Snowflake — sjednoceno na SF). Skilly: `fc-closed-top-reasons`, `ca-closed-top-reasons`. `const X=[reason, m_cur, ytd, prev]` top 15 dle ytd.
+
+### Definice (1:1 dle compute_all.py)
+- Phase 1 (FCTOP): `CarAudit_Status__c IN ('REJECT New CA','REJECT Data Validation','REJECT Car Check','REJECT VIN Check')`.
+- Phase 2 (CATOP): `CarAudit_Status__c LIKE '%REJECT%' AND NOT IN` (4 Phase 1) — tj. reject mimo Phase 1.
+- Měsíc = `CA_New_CarAudit_Date__c`. Období: m_cur=aktuální měsíc, ytd=aktuální rok, prev=předchozí rok.
+- **Efektivní důvod** (get_effective_reason): `CA Reason Code`; je-li `'Closed Order, automatically reject'` → `CarAudit: Detail Reason Code`, jinak fallback `Order: Sales LOST reason code`. Pozn.: zahrnuje i „customer cancelled order" reasony (nevylučují se).
+- ⚠️ Long-text `CA_Reason_Code__c` NELZE GROUP BY → použit picklist `CarAudit__r.Reason_Code__c` (≡ obsahově, ověřeno) a efektivní důvod rozložen do 4 groupable aggregate dotazů (normal/detail/lost/neither). Žádné stránkování.
+
+### Implementace
+`build_top_reasons(normal,detail,lost,neither)` v `scripts/build_sf_views.py` (gated na sf_fctop_* / sf_catop_*; guard ytd<200 → přeskočí). 8 aggregate SOQL (4 per chart).
+
+### SOQL (per chart; <PHASE> = Phase1 IN-set nebo Phase2 LIKE/NOT-IN; <RT>=RecordType.Name IN ('CarAudit','Carvago CarAudit'))
+```
+normal : SELECT CALENDAR_YEAR(CA_New_CarAudit_Date__c) yr, CALENDAR_MONTH(CA_New_CarAudit_Date__c) mo, CarAudit__r.Reason_Code__c rc, COUNT(Id) c FROM Case WHERE <RT> AND <PHASE> AND CA_New_CarAudit_Date__c>=2025-01-01T00:00:00Z AND CarAudit__r.Reason_Code__c!='Closed Order, automatically reject' GROUP BY ...,CarAudit__r.Reason_Code__c
+detail : ... CarAudit__r.Detail_Reason_Code__c dr ... AND CarAudit__r.Reason_Code__c='Closed Order, automatically reject' AND CarAudit__r.Detail_Reason_Code__c!=null GROUP BY ...,Detail_Reason_Code__c
+lost   : ... Order__r.Sales_LOST_reason_code__c sl ... AND rc='Closed Order...' AND Detail=null AND Order__r.Sales_LOST_reason_code__c!=null GROUP BY ...,Sales_LOST_reason_code__c
+neither: SELECT yr,mo,COUNT(Id) c ... AND rc='Closed Order...' AND Detail=null AND Sales_LOST=null GROUP BY yr,mo
+```
+Ověřeno (live 26.06.2026, reconcile P1 auto 2025=1340/2026=1283): FCTOP top ytd = Car not available Sold 951, Closed Order auto 892, Untrusty seller 841. CATOP top ytd = Closed Order auto 854, Car not available 495.
+Pozn.: liší se od dřívějšího (Snowflake) const — mapping auto-reject → Sales LOST se nově aplikuje (Closed Order klesá, objeví se „Lost based on Sales Lifecycle/Opportunity", „Chosen another car").
+
+---
+
 ## TODO — pohledy k doplnění do build_sf_views.py (zatím statické) — ROADMAP
 
 Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
@@ -207,9 +232,8 @@ Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
 ### ~~SUIT — CA from seller, evaluated as suitable~~ ✅ HOTOVO 26.06.2026 → viz sekce „SUIT" výše (implementováno v build_sf_views.py).
 - Oprava: kromě „CA NE 'REJECT New CA'" je nutné Carvago (Instamotion=false) + NOT XK/AL scoping. Bez stránkování (aggregate GROUP BY). Ověřeno 1:1: 12/25 300/944, 5/26 816/1954.
 
-### FCTOP / CATOP — Top-10 reason (Phase 1 / Phase 2) — 3 období (měsíc/YTD/loni)
-- Skilly: `fc-closed-top-reasons` (Phase 1), `ca-closed-top-reasons` (Phase 2). Reason = `CA_Reason_Code__c` (Case) NEBO `CarAudit__r.Reason_Code__c`. Phase 1 rejecty {REJECT New CA, Data Validation, Car Check, VIN Check}; Phase 2 = ostatní rejecty. Long-text → NELZE GROUP BY: stáhni řádky a agreguj v Pythonu; >2000/období → stránkovat (ORDER BY + Id cursor).
-- `const FCTOP/CATOP=[[reason, m_cur, ytd, prev], ...]` top ~12-15.
+### ~~FCTOP / CATOP — Top reason (Phase 1 / Phase 2)~~ ✅ HOTOVO 26.06.2026 → viz sekce „FCTOP / CATOP" výše.
+- Vyřešeno groupable picklistem + 4-bucket dekompozicí efektivního důvodu (bez stránkování). Mapping auto-reject → Sales LOST aplikován.
 
 ### CADR — CarAudit Closed reason breakdown (weekly) — Phase 2
 - `const CADR=[[week, count, ?], ...]` (ověř formát v index.html ~ř.851). Phase 2 closed po týdnech dle CA New date.
