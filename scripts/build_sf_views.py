@@ -8,6 +8,7 @@ Vstupy (v adresari SF_WORK, default $HOME) - zpracuje jen ty, co existuji:
   sf_cp_active.json -> ROWS (Active Purchases: Car Purchase non-terminal, faze x stari)
   sf_seller.json + sf_rates.json -> S1/S2 (Seller Payment Backlog)
   sf_dreg.json -> DREG (Instamotion Document & Registration: aktivni dle Kroschke statusu, [idx,date])
+  sf_pstr.json -> PSTR (Price structure completed CA from seller, % po mesicich; [m/yy,free,p1_100,p100_120,p120_125,p125_145,p145plus])
 """
 import json, re, os
 from datetime import datetime, timedelta, timezone
@@ -176,6 +177,37 @@ def build_dreg(records):
         out.append([DREG_KROSCHKE_IDX.get(k,4), dv[:10]])   # else -> 4 = "Bez statusu"
     return out
 
+
+# ---- PSTR (Price structure - completed CA from seller, % po mesicich) ----
+# Filtr je v SOQL (Status='CarAudit Done' + Car_inspection_by_Vendor__c vyplneno, ne '-').
+# Mesic = CA_New_CarAudit_Date__c. Amount=null -> vyloucit (i z n). 0=Free OK.
+# Bez Instamotion/XK-AL filtru (overeno 1:1 proti referenci: 11/25 free56 n85).
+def _pstr_bucket(a):
+    if a==0:   return 'free'
+    if a<=100: return 'p1_100'
+    if a<=120: return 'p100_120'
+    if a<=125: return 'p120_125'
+    if a<=145: return 'p125_145'
+    return 'p145plus'
+PSTR_KEYS=['free','p1_100','p100_120','p120_125','p125_145','p145plus']
+def build_pstr(records):
+    from collections import defaultdict
+    agg=defaultdict(lambda: defaultdict(int))
+    for r in records:
+        dv=r.get('CA_New_CarAudit_Date__c')
+        if not dv: continue
+        ca=r.get('CarAudit__r') or {}
+        a=ca.get('CarAudit_Amount__c')
+        if a is None: continue                      # blank amount -> vyloucit (i z n)
+        y=int(dv[:4]); m=int(dv[5:7])
+        agg[(y,m)][_pstr_bucket(float(a))]+=1
+    rows=[]
+    for (y,m) in sorted(agg):                       # oldest first (chart reverses -> newest left)
+        lab=f"{m}/{str(y)[2:]}"
+        b=agg[(y,m)]
+        rows.append([lab]+[b.get(k,0) for k in PSTR_KEYS])
+    return rows
+
 def main():
     html=open('index.html',encoding='utf-8').read(); did=[]
     car=load('sf_caraudit_recent.json')
@@ -205,6 +237,15 @@ def main():
     if dr is not None:
         dreg=build_dreg(dr['records'])
         html=replace_const(html,'DREG',json.dumps(dreg,ensure_ascii=False)); did.append('DREG')
+    ps=load('sf_pstr.json')
+    if ps is not None:
+        pstr=build_pstr(ps['records'])
+        tot=sum(sum(r[1:]) for r in pstr)
+        if tot < 800:
+            print(f'WARN PSTR: jen {tot} zaznamu (<800) -> PRESKAKUJI, nepřepisuji')
+        else:
+            html=replace_const(html,'PSTR',json.dumps(pstr,ensure_ascii=False).replace(' ',''))
+            did.append('PSTR')
     open('index.html','w',encoding='utf-8').write(html)
     print("OK | updated:", did)
 if __name__=='__main__': main()

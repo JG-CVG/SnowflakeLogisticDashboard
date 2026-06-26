@@ -131,6 +131,42 @@ sf_rates.json: `SELECT IsoCode, ConversionRate FROM CurrencyType WHERE IsActive=
 - **Implementace:** `build_dreg(records)` v build_sf_views.py, vstup `sf_dreg.json`.
 - **SOQL:** `SELECT Kroschke_Registration_Status__c, Coordination_with_Vendor_Date__c, Status__c FROM Documents_and_Registration__c WHERE Order__r.Instamotion_Customer__c=true AND Status__c NOT IN ('car-registration-done','car-registration-closed')`
 
+## PSTR — Price structure (completed CA from seller, % po měsících)  (canvas `pstruct`, `const PSTR`)  ✅ IMPLEMENTOVÁNO 26.06.2026
+**Zdroj:** ☁ Salesforce. Skill: `price-structure-ca-from-seller`. **Co zobrazuje:** 100% stacked bar po měsících = % zastoupení cenových pásem (CarAudit Amount) u dokončených CA od prodejce; `n` nad sloupcem; nejnovější měsíc vlevo; od 11/25.
+
+### Filtr (ověřeno 1:1 proti referenci — 11/25: [56,13,6,9,1,0], n=85, Free 65.9 %)
+1. `Status` = **`CarAudit Done`** (standardní Case status).
+2. `CarAudit__r.Car_inspection_by_Vendor__c` **vyplněné** (≠ null, ≠ `-`).
+3. `CarAudit__r.CarAudit_Amount__c` **číselné** (0 = Free OK; null/blank se VYLUČUJE i z `n`).
+4. Měsíc = `CA_New_CarAudit_Date__c`, label `m/yy`.
+- **ŽÁDNÝ** Instamotion / XK-AL filtr (přidání by čísla rozhodilo — ověřeno).
+
+### ⚠️ Důležité zjištění (oprava roadmap-poznámky níže)
+Standardní `Status='CarAudit Done'` reprodukuje referenci **přesně** a staré měsíce (11/25, 12/25)
+po 7+ měsících **nedegradují** → `'CarAudit Done'` je u CarAudit case terminální.
+**NENÍ tedy nutná rekonstrukce z CaseHistory** (na rozdíl od původního TODO předpokladu).
+Pozn.: `Case_Status__c` (custom) ≈ 0 — nepoužívat; standardní `Status` ano.
+
+### Cenová pásma (identická s Cost structure DE)
+free `==0` · p1_100 `0<a≤100` · p100_120 `100<a≤120` · p120_125 `120<a≤125` · p125_145 `125<a≤145` · p145plus `a>145`.
+`const PSTR=[label,free,p1_100,p100_120,p120_125,p125_145,p145plus]` (oldest first; chart reverses).
+
+### Implementace
+`build_pstr(records)` v `scripts/build_sf_views.py` (gated na `sf_pstr.json`; guard: total <800 → přeskočí, nepřepíše).
+
+### SOQL (sf_pstr.json)
+```
+SELECT CA_New_CarAudit_Date__c, CarAudit__r.CarAudit_Amount__c
+FROM Case
+WHERE Status='CarAudit Done'
+  AND CA_New_CarAudit_Date__c >= 2025-11-01T00:00:00Z
+  AND CarAudit__r.Car_inspection_by_Vendor__c != null
+  AND CarAudit__r.Car_inspection_by_Vendor__c != '-'
+```
+Ověřený stav (live SF 26.06.2026): 11/25 n=85 · 12/25 120 · 1/26 162 · 2/26 200 · 3/26 234 · 4/26 241 · 5/26 258 · 6/26 277 (roste).
+
+---
+
 ## TODO — pohledy k doplnění do build_sf_views.py (zatím statické) — ROADMAP
 
 Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
@@ -138,9 +174,8 @@ Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
 - ⚠️ **POZOR:** `Case_Status__c='CarAudit Done'` vrací ~0 (případ se přes Done posune dál). „CarAudit Done" se MUSÍ rekonstruovat z **CaseHistory** (změna Status → 'CarAudit Done'), stejně jako u skillu `snowflake-caraudit-cost-structure`.
 - CA New date = `Case.CA_New_CarAudit_Date__c`. Reason long-text na Case = `CA_Reason_Code__c` (length 1300 → NELZE GROUP BY).
 
-### PSTR — Price structure (completed CA from seller, % po měsících) — ☁ SF, od 11/25
-- Skill: `price-structure-ca-from-seller`. Filtr: CarAudit **Done** (z CaseHistory) + `CarAudit__r.Car_inspection_by_Vendor__c` vyplněné + `CarAudit__r.CarAudit_Amount__c` číselné (0=Free OK). Měsíc = CA New date. Buckety free/1-100/100-120/120-125/125-145/145+.
-- `const PSTR=[label,free,p1_100,p100_120,p120_125,p125_145,p145plus]`. REFERENCE k ověření: 11/25 → [56,13,6,9,1,0] (n=85, Free 65.9 %); 5/26 n=255.
+### ~~PSTR — Price structure~~ ✅ HOTOVO 26.06.2026 → viz sekce „PSTR" výše (implementováno v build_sf_views.py).
+- Oprava původního předpokladu: NENÍ potřeba CaseHistory — standardní `Status='CarAudit Done'` stačí (ověřeno 1:1: 11/25 [56,13,6,9,1,0] n=85). Bez Instamotion/XK-AL filtru.
 
 ### SUIT — CA from seller, evaluated as suitable (měsíčně) — ☁ SF, od 12/25
 - `const SUIT=[month, from_seller, total]`. total = CA NE 'REJECT New CA' (Phase 1 první reject) dle CA New date; from_seller = `Car_inspection_by_Vendor__c` vyplněné. Ověř proti SUIT v index.html (6/26: 834/1319). Vysoký objem → stránkování.
