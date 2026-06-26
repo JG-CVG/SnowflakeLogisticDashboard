@@ -167,6 +167,33 @@ Ověřený stav (live SF 26.06.2026): 11/25 n=85 · 12/25 120 · 1/26 162 · 2/2
 
 ---
 
+## SUIT — CA from seller, evaluated as suitable (měsíčně)  (canvas `suit`, `const SUIT`)  ✅ IMPLEMENTOVÁNO 26.06.2026
+**Zdroj:** ☁ Salesforce. **Co zobrazuje:** měsíčně stacked share = z kolika CA (total) byla u kolika vyhodnocena vhodnost od prodejce (fromSeller). Od 12/25. `const SUIT=[label, fromSeller, total]` (oldest first; chart `.slice().reverse()`).
+
+### Definice (ověřeno proti referenci — live SF 26.06.2026, settled měsíce ±≤5)
+Společný základ (obojí): Case `RecordType.Name IN ('CarAudit','Carvago CarAudit')`, `Order__r.Instamotion_Customer__c=false` (Carvago), `Order__r.Customer_Country_Origin__c` NEOBSAHUJE XK ani AL, `CA_New_CarAudit_Date__c >= 2025-12-01`, měsíc = CA New date.
+- **total** = základ + `CarAudit_Status__c != 'REJECT New CA'` (Phase 1 první reject; pozn. SOQL `!=` zahrnuje i null → správně).
+- **fromSeller** = total + `CarAudit__r.Car_inspection_by_Vendor__c` vyplněné (≠ null, ≠ `-`).
+- ⚠️ Roadmap-poznámka původně uváděla jen „CA NE 'REJECT New CA'" — chybělo Carvago + NOT XK/AL scoping (jinak total ~+60-87/měsíc moc).
+
+### Implementace
+`build_suit(seller, total)` v `scripts/build_sf_views.py` (gated na `sf_suit_total.json` + `sf_suit_seller.json`; guard total<3000 → přeskočí). Dvě aggregate SOQL (GROUP BY rok/měsíc, PCONV-style → bez stránkování).
+
+### SOQL
+sf_suit_total.json:
+```
+SELECT CALENDAR_YEAR(CA_New_CarAudit_Date__c) yr, CALENDAR_MONTH(CA_New_CarAudit_Date__c) mo, COUNT(Id) c
+FROM Case
+WHERE RecordType.Name IN ('CarAudit','Carvago CarAudit') AND Order__r.Instamotion_Customer__c=false
+  AND CA_New_CarAudit_Date__c >= 2025-12-01T00:00:00Z AND CarAudit_Status__c != 'REJECT New CA'
+  AND (NOT Order__r.Customer_Country_Origin__c LIKE '%XK%') AND (NOT Order__r.Customer_Country_Origin__c LIKE '%AL%')
+GROUP BY CALENDAR_YEAR(CA_New_CarAudit_Date__c), CALENDAR_MONTH(CA_New_CarAudit_Date__c)
+```
+sf_suit_seller.json: stejné + `AND CarAudit__r.Car_inspection_by_Vendor__c != null AND CarAudit__r.Car_inspection_by_Vendor__c != '-'`.
+Ověřený stav (live 26.06.2026): 12/25 300/944 · 1/26 393/1133 · 2/26 450/1140 · 3/26 641/1700 · 4/26 880/1997 · 5/26 816/1954 · 6/26 1057/1557 (roste).
+
+---
+
 ## TODO — pohledy k doplnění do build_sf_views.py (zatím statické) — ROADMAP
 
 Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
@@ -177,8 +204,8 @@ Zmapovaná pole (ověřeno 26.06.2026, getObjectSchema):
 ### ~~PSTR — Price structure~~ ✅ HOTOVO 26.06.2026 → viz sekce „PSTR" výše (implementováno v build_sf_views.py).
 - Oprava původního předpokladu: NENÍ potřeba CaseHistory — standardní `Status='CarAudit Done'` stačí (ověřeno 1:1: 11/25 [56,13,6,9,1,0] n=85). Bez Instamotion/XK-AL filtru.
 
-### SUIT — CA from seller, evaluated as suitable (měsíčně) — ☁ SF, od 12/25
-- `const SUIT=[month, from_seller, total]`. total = CA NE 'REJECT New CA' (Phase 1 první reject) dle CA New date; from_seller = `Car_inspection_by_Vendor__c` vyplněné. Ověř proti SUIT v index.html (6/26: 834/1319). Vysoký objem → stránkování.
+### ~~SUIT — CA from seller, evaluated as suitable~~ ✅ HOTOVO 26.06.2026 → viz sekce „SUIT" výše (implementováno v build_sf_views.py).
+- Oprava: kromě „CA NE 'REJECT New CA'" je nutné Carvago (Instamotion=false) + NOT XK/AL scoping. Bez stránkování (aggregate GROUP BY). Ověřeno 1:1: 12/25 300/944, 5/26 816/1954.
 
 ### FCTOP / CATOP — Top-10 reason (Phase 1 / Phase 2) — 3 období (měsíc/YTD/loni)
 - Skilly: `fc-closed-top-reasons` (Phase 1), `ca-closed-top-reasons` (Phase 2). Reason = `CA_Reason_Code__c` (Case) NEBO `CarAudit__r.Reason_Code__c`. Phase 1 rejecty {REJECT New CA, Data Validation, Car Check, VIN Check}; Phase 2 = ostatní rejecty. Long-text → NELZE GROUP BY: stáhni řádky a agreguj v Pythonu; >2000/období → stránkovat (ORDER BY + Id cursor).

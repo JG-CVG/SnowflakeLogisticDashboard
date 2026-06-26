@@ -891,8 +891,8 @@ const AVGP=[["Led 24",165.1,605],["Úno 24",165.3,588],["Bře 24",163.4,614],["D
   if(faceImg)faceImg.onload=function(){ch.draw();};
 })();
 
-// ===== CA from seller — evaluated as suitable (monthly) =====  [label, fromSeller, total]  STACKED share
-const SUIT=[["12/25",300,943],["1/26",393,1131],["2/26",451,1135],["3/26",639,1698],["4/26",882,1999],["5/26",816,1952],["6/26",834,1319]];
+// ===== CA from seller — evaluated as suitable (monthly) =====  [label, fromSeller, total]  STACKED share  SOURCE: Salesforce Case RecordType CarAudit, Carvago (Instamotion=false), NOT XK/AL, od 12/25, měsíc=CA_New_CarAudit_Date__c; total=CarAudit_Status__c≠'REJECT New CA'; fromSeller=+CarAudit__r.Car_inspection_by_Vendor__c vyplněno(≠'-'). Dynamicky: scripts/build_sf_views.py (sf_suit_total.json + sf_suit_seller.json). Ověřeno 1:1 (12/25 300/944, 5/26 816/1954).
+const SUIT=[["12/25",300,944],["1/26",393,1133],["2/26",450,1140],["3/26",641,1700],["4/26",880,1997],["5/26",816,1954],["6/26",1057,1557]];
 (function(){
   const rows=SUIT.slice().reverse();
   const labs=rows.map(r=>r[0]), fs=rows.map(r=>r[1]), std=rows.map(r=>r[2]-r[1]), tot=rows.map(r=>r[2]);

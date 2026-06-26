@@ -9,6 +9,7 @@ Vstupy (v adresari SF_WORK, default $HOME) - zpracuje jen ty, co existuji:
   sf_seller.json + sf_rates.json -> S1/S2 (Seller Payment Backlog)
   sf_dreg.json -> DREG (Instamotion Document & Registration: aktivni dle Kroschke statusu, [idx,date])
   sf_pstr.json -> PSTR (Price structure completed CA from seller, % po mesicich; [m/yy,free,p1_100,p100_120,p120_125,p125_145,p145plus])
+  sf_suit_total.json + sf_suit_seller.json -> SUIT (CA from seller evaluated as suitable, mesicne; [m/yy,fromSeller,total]; od 12/25)
 """
 import json, re, os
 from datetime import datetime, timedelta, timezone
@@ -208,6 +209,22 @@ def build_pstr(records):
         rows.append([lab]+[b.get(k,0) for k in PSTR_KEYS])
     return rows
 
+
+# ---- SUIT (CA from seller - evaluated as suitable, mesicne; od 12/25) ----
+# Dve aggregate SOQL (PCONV-style, GROUP BY rok/mesic), kazda {yr,mo,c}:
+#   total      = CarAudit (RecordType CarAudit/Carvago CarAudit), Carvago (Instamotion=false),
+#                NOT XK/AL, CarAudit_Status__c != 'REJECT New CA', dle CA New date.
+#   fromSeller = total + CarAudit__r.Car_inspection_by_Vendor__c vyplneno (!= null, != '-').
+# Overeno proti referenci (live SF 26.06.2026, settled mesice ±<=5): 12/25 300/944, 5/26 816/1954.
+def build_suit(seller, total):
+    T={(r['yr'],r['mo']):r['c'] for r in total}
+    S={(r['yr'],r['mo']):r['c'] for r in seller}
+    rows=[]
+    for (y,m) in sorted(set(T)|set(S)):
+        if (y,m) < (2025,12): continue            # od 12/25
+        rows.append([f"{m}/{str(y)[2:]}", S.get((y,m),0), T.get((y,m),0)])
+    return rows
+
 def main():
     html=open('index.html',encoding='utf-8').read(); did=[]
     car=load('sf_caraudit_recent.json')
@@ -246,6 +263,15 @@ def main():
         else:
             html=replace_const(html,'PSTR',json.dumps(pstr,ensure_ascii=False).replace(' ',''))
             did.append('PSTR')
+    st=load('sf_suit_total.json'); ss=load('sf_suit_seller.json')
+    if st is not None and ss is not None:
+        suit=build_suit(ss['records'], st['records'])
+        tot=sum(r[2] for r in suit)
+        if tot < 3000:
+            print(f'WARN SUIT: total {tot} (<3000) -> PRESKAKUJI, nepřepisuji')
+        else:
+            html=replace_const(html,'SUIT',json.dumps(suit,ensure_ascii=False).replace(' ',''))
+            did.append('SUIT')
     open('index.html','w',encoding='utf-8').write(html)
     print("OK | updated:", did)
 if __name__=='__main__': main()
