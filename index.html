@@ -987,20 +987,40 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
 })();
 
 const BUILD_TS_SNOW="2026-06-26T16:00:54+02:00"; const BUILD_TS_SF="2026-06-26T08:33:25+02:00"; // SNOW=čas Snowflake refreshe, SF=čas Salesforce refreshe (prázdné=SF se neaktualizovalo automaticky); každý stampuje scheduled task zvlášť, SF jen při úspěchu
-// ===== per-card razítko poslední aktualizace (vlevo dole) =====
+// ===== per-card razítko + HLÍDAČ ČERSTVOSTI (vlevo dole + horní banner) =====
 (function(){
+  var STALE_H=20; // data starší než 20 h = refresh pravděpodobně neproběhl
   function pad(n){return ('0'+n).slice(-2);}
   function fmt(d){return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes());}
+  function ageH(d){return (d&&!isNaN(d.getTime()))?(Date.now()-d.getTime())/3600000:null;}
   var bSnow=(typeof BUILD_TS_SNOW!=='undefined'&&BUILD_TS_SNOW)?new Date(BUILD_TS_SNOW):null;
   var bSf=(typeof BUILD_TS_SF!=='undefined'&&BUILD_TS_SF)?new Date(BUILD_TS_SF):null;
-  var snowTs='❄ Snowflake · data aktualizována '+((bSnow&&!isNaN(bSnow.getTime()))?fmt(bSnow):'neznámé');
-  var sfTs=(bSf&&!isNaN(bSf.getTime()))?('☁ Salesforce · data aktualizována '+fmt(bSf)):'☁ Salesforce · ⚠ data se neaktualizují automaticky';
+  var aSnow=ageH(bSnow), aSf=ageH(bSf);
+  function lbl(prefix,d,a){
+    if(!d||isNaN(d.getTime())) return prefix+' \u00b7 \u26a0 data se neaktualizuj\u00ed automaticky';
+    var s=prefix+' \u00b7 data aktualizov\u00e1na '+fmt(d)+' (p\u0159ed '+Math.round(a)+' h)';
+    return (a>STALE_H ? '\u26a0 '+s+' \u2014 NEAKTU\u00c1LN\u00cd!' : s);
+  }
+  var snowTs=lbl('\u2744 Snowflake',bSnow,aSnow);
+  var sfTs=lbl('\u2601 Salesforce',bSf,aSf);
   document.querySelectorAll('.card').forEach(function(card){
     var b=card.querySelector('.srcb'); if(!b)return;
-    var d=document.createElement('div'); d.className='cardts '+(b.classList.contains('crm')?'crm':'sf');
-    d.textContent='↻ '+(b.classList.contains('crm')?sfTs:snowTs);
+    var crm=b.classList.contains('crm');
+    var d=document.createElement('div'); d.className='cardts '+(crm?'crm':'sf');
+    d.textContent='\u21bb '+(crm?sfTs:snowTs);
+    var a=crm?aSf:aSnow;
+    if(a==null||a>STALE_H){ d.style.color='#fca5a5'; d.style.fontWeight='700'; }
     card.appendChild(d);
   });
+  var stale=[];
+  if(aSnow==null||aSnow>STALE_H) stale.push('Snowflake '+(aSnow==null?'(nezn\u00e1m\u00e9)':Math.round(aSnow)+' h'));
+  if(aSf==null||aSf>STALE_H) stale.push('Salesforce '+(aSf==null?'(neaktualizuje se)':Math.round(aSf)+' h'));
+  if(stale.length){
+    var bar=document.createElement('div');
+    bar.style.cssText='position:sticky;top:0;z-index:9999;background:#7f1d1d;color:#fee2e2;padding:10px 16px;font-weight:700;font-size:13px;text-align:center;border-bottom:2px solid #ef4444';
+    bar.innerHTML='\u26a0 DATA NEJSOU AKTU\u00c1LN\u00cd \u2014 posledn\u00ed refresh: '+stale.join(' \u00b7 ')+' star\u00e9. Auto-refresh pravd\u011bpodobn\u011b neprob\u011bhl.';
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
 })();
 </script>
 <script>
