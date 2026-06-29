@@ -958,38 +958,59 @@ const CA_WEEKLY_COST_DATA_DE=[{week:"2024-W01",label:"W01/24",year:2024,week_num
 const BUILD_TS_SNOW="2026-06-29T08:25:52+02:00"; const BUILD_TS_SF="2026-06-29T08:50:35+02:00"; // SNOW=čas Snowflake refreshe, SF=čas Salesforce refreshe (prázdné=SF se neaktualizovalo automaticky); každý stampuje scheduled task zvlášť, SF jen při úspěchu
 // ===== per-card razítko + HLÍDAČ ČERSTVOSTI (vlevo dole + horní banner) =====
 (function(){
-  var STALE_H=20; // data starší než 20 h = refresh pravděpodobně neproběhl
+  var STALE_H=20; // data starsi nez 20 h = refresh pravdepodobne neprobehl
   function pad(n){return ('0'+n).slice(-2);}
   function fmt(d){return pad(d.getDate())+'.'+pad(d.getMonth()+1)+'.'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes());}
   function ageH(d){return (d&&!isNaN(d.getTime()))?(Date.now()-d.getTime())/3600000:null;}
+  function ago(a){
+    if(a==null) return '';
+    var mins=Math.floor(a*60);
+    if(mins<1) return 'před <1 min';
+    if(mins<90) return 'před '+mins+' min';
+    return 'před '+Math.round(a)+' h';
+  }
   var bSnow=(typeof BUILD_TS_SNOW!=='undefined'&&BUILD_TS_SNOW)?new Date(BUILD_TS_SNOW):null;
   var bSf=(typeof BUILD_TS_SF!=='undefined'&&BUILD_TS_SF)?new Date(BUILD_TS_SF):null;
-  var aSnow=ageH(bSnow), aSf=ageH(bSf);
   function lbl(prefix,d,a){
-    if(!d||isNaN(d.getTime())) return prefix+' \u00b7 \u26a0 data se neaktualizuj\u00ed automaticky';
-    var s=prefix+' \u00b7 data aktualizov\u00e1na '+fmt(d)+' (p\u0159ed '+Math.round(a)+' h)';
-    return (a>STALE_H ? '\u26a0 '+s+' \u2014 NEAKTU\u00c1LN\u00cd!' : s);
+    if(!d||isNaN(d.getTime())) return prefix+' · ⚠ data se neaktualizují automaticky';
+    var s=prefix+' · data aktualizována '+fmt(d)+' ('+ago(a)+')';
+    return (a!=null&&a>STALE_H ? '⚠ '+s+' — NEAKTUÁLNÍ!' : s);
   }
-  var snowTs=lbl('\u2744 Snowflake',bSnow,aSnow);
-  var sfTs=lbl('\u2601 Salesforce',bSf,aSf);
+  var badges=[];
   document.querySelectorAll('.card').forEach(function(card){
     var b=card.querySelector('.srcb'); if(!b)return;
     var crm=b.classList.contains('crm');
-    var d=document.createElement('div'); d.className='cardts '+(crm?'crm':'sf');
-    d.textContent='\u21bb '+(crm?sfTs:snowTs);
-    var a=crm?aSf:aSnow;
-    if(a==null||a>STALE_H){ d.style.color='#fca5a5'; d.style.fontWeight='700'; }
-    card.appendChild(d);
+    var el=document.createElement('div'); el.className='cardts '+(crm?'crm':'sf');
+    card.appendChild(el);
+    badges.push({el:el,crm:crm});
   });
-  var stale=[];
-  if(aSnow==null||aSnow>STALE_H) stale.push('Snowflake '+(aSnow==null?'(nezn\u00e1m\u00e9)':Math.round(aSnow)+' h'));
-  if(aSf==null||aSf>STALE_H) stale.push('Salesforce '+(aSf==null?'(neaktualizuje se)':Math.round(aSf)+' h'));
-  if(stale.length){
-    var bar=document.createElement('div');
-    bar.style.cssText='position:sticky;top:0;z-index:9999;background:#7f1d1d;color:#fee2e2;padding:10px 16px;font-weight:700;font-size:13px;text-align:center;border-bottom:2px solid #ef4444';
-    bar.innerHTML='\u26a0 DATA NEJSOU AKTU\u00c1LN\u00cd \u2014 posledn\u00ed refresh: '+stale.join(' \u00b7 ')+' star\u00e9. Auto-refresh pravd\u011bpodobn\u011b neprob\u011bhl.';
-    document.body.insertBefore(bar, document.body.firstChild);
+  var topbar=null;
+  function render(){
+    var aSnow=ageH(bSnow), aSf=ageH(bSf);
+    var snowTs=lbl('❄ Snowflake',bSnow,aSnow);
+    var sfTs=lbl('☁ Salesforce',bSf,aSf);
+    badges.forEach(function(x){
+      var a=x.crm?aSf:aSnow;
+      x.el.textContent='↻ '+(x.crm?sfTs:snowTs);
+      var bad=(a==null||a>STALE_H);
+      x.el.style.color=bad?'#fca5a5':'';
+      x.el.style.fontWeight=bad?'700':'';
+    });
+    var stale=[];
+    if(aSnow==null||aSnow>STALE_H) stale.push('Snowflake '+(aSnow==null?'(neznámé)':Math.round(aSnow)+' h'));
+    if(aSf==null||aSf>STALE_H) stale.push('Salesforce '+(aSf==null?'(neaktualizuje se)':Math.round(aSf)+' h'));
+    if(stale.length){
+      if(!topbar){
+        topbar=document.createElement('div');
+        topbar.style.cssText='position:sticky;top:0;z-index:9999;background:#7f1d1d;color:#fee2e2;padding:10px 16px;font-weight:700;font-size:13px;text-align:center;border-bottom:2px solid #ef4444';
+        document.body.insertBefore(topbar, document.body.firstChild);
+      }
+      topbar.innerHTML='⚠ DATA NEJSOU AKTUÁLNÍ — poslední refresh: '+stale.join(' · ')+' staré. Auto-refresh pravděpodobně neproběhl.';
+      topbar.style.display='';
+    } else if(topbar){ topbar.style.display='none'; }
   }
+  render();
+  setInterval(render,30000);
 })();
 </script>
 <script>
