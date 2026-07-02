@@ -292,10 +292,9 @@ def main():
         recs=car['records']
         if len(recs)<200: raise SystemExit(f"ABORT: jen {len(recs)} CarAudit zaznamu (<200).")
         fc,ca=compute_weekly(recs); html=merge_weekly(html,'FC1',fc); html=merge_weekly(html,'CA1',ca); did+=['FC1','CA1']
-    od=load('sf_imca_orders.json'); iv=load('sf_imca_invoices.json')
-    if od is not None and iv is not None:
-        imca=build_imca(od['records'], iv['records'])
-        html=replace_const(html,'IMCA',json.dumps(imca,ensure_ascii=False)); did.append('IMCA')
+    # IMCA (Instamotion Contract Accepted) MIGROVANO na Snowflake (2.7.2026) -> scripts/im_contract_accepted_snowflake.sql
+    # SF build uz IMCA neprepisuje. Data se embeduji ze Snowflake jako u ostatnich ❄ pohledu.
+    pass
     pp=load('sf_pconv_paid.json'); pl=load('sf_pconv_lost.json')
     if pp is not None and pl is not None:
         pconv=build_pconv(pp['records'], pl['records'])
