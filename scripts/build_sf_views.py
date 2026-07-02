@@ -309,10 +309,9 @@ def main():
         s1,s2=build_seller_backlog(sb['records'], rates)
         html=replace_const(html,'S1',json.dumps(s1,ensure_ascii=False))
         html=replace_const(html,'S2',json.dumps(s2,ensure_ascii=False)); did.append('S1/S2')
-    dr=load('sf_dreg.json')
-    if dr is not None:
-        dreg=build_dreg(dr['records'])
-        html=replace_const(html,'DREG',json.dumps(dreg,ensure_ascii=False)); did.append('DREG')
+    # DREG (Doc & Registration) MIGROVANO na Snowflake (2.7.2026) -> scripts/doc_registration_snowflake.sql
+    # SF build uz DREG neprepisuje. Aktivni dle Status__c (Documents_and_Registration__c nema Done/Closed date pole).
+    pass
     # PSTR (Price structure) MIGROVANO na Snowflake (2.7.2026) -> scripts/price_structure_snowflake.sql
     # SF build uz PSTR neprepisuje (drive sf_pstr.json). Data se embeduji ze Snowflake jako u ostatnich ❄ grafu.
     pass
