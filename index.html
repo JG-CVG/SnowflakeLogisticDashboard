@@ -230,8 +230,8 @@
       <div class="chartbox"><canvas id="suit"></canvas></div>
     </div>
     <div class="card full">
-      <h2>🏷️ Price structure — completed CA from seller (% representation)<span class="srcb crm">☁ Salesforce</span></h2>
-      <div class="sub">Pouze Carvago CA (bez Instamotion, bez Cebia) · bez customer country XK/AL · Status „CarAudit Done" + vyplněné „Car inspection by Vendor" · měsíc dle CA New CarAudit Date · nejnovější vlevo · cenová pásma jako „Cost structure DE" · n nad sloupcem = počet CA v měsíci · zdroj: Salesforce (live) · evidováno od 11/25</div>
+      <h2>🏷️ Price structure — completed CA from seller (% representation)<span class="srcb sf">❄ Snowflake</span></h2>
+      <div class="sub">Pouze Carvago CA (bez Instamotion, bez Cebia) · bez customer country XK/AL · Status „CarAudit Done" + vyplněné „Car inspection by Vendor" · měsíc dle CA New CarAudit Date · nejnovější vlevo · cenová pásma jako „Cost structure DE" · n nad sloupcem = počet CA v měsíci · zdroj: Snowflake (Car_Audit__c + CaseHistory, Status→CarAudit Done) · evidováno od 11/25</div>
       <div class="chartbox"><canvas id="pstruct"></canvas></div>
     </div>
     <div class="card full">
@@ -885,8 +885,8 @@ const SUIT=[["12/25",300,944],["1/26",393,1133],["2/26",450,1140],["3/26",641,17
   });
 })();
 
-// ===== Price structure — completed CA from seller (% representation) =====  [label, free,p1_100,p100_120,p120_125,p125_145,p145plus]  SOURCE: Salesforce Case (Status='CarAudit Done') + CarAudit__r.Car_inspection_by_Vendor__c filled (≠'-') + CarAudit_Amount__c numeric (0=Free); month=CA_New_CarAudit_Date__c; BEZ Instamotion/XK-AL filtru (ověřeno 1:1, 11/25 free56 n85). Dynamicky: scripts/build_sf_views.py (sf_pstr.json)
-const PSTR=[["11/25",56,13,6,9,1,0],["12/25",74,19,10,17,0,0],["1/26",90,17,23,32,0,0],["2/26",120,26,24,30,0,0],["3/26",153,27,23,31,0,0],["4/26",151,27,13,50,0,0],["5/26",136,34,24,64,0,0],["6/26",185,53,48,69,0,1]];
+// ===== Price structure — completed CA from seller (% representation) =====  [label, free,p1_100,p100_120,p120_125,p125_145,p145plus]  SOURCE: Salesforce Case (Status='CarAudit Done') + CarAudit__r.Car_inspection_by_Vendor__c filled (≠'-') + CarAudit_Amount__c numeric (0=Free); month=CA_New_CarAudit_Date__c; BEZ Instamotion/XK-AL filtru (ověřeno 1:1, 11/25 free56 n85). SNOWFLAKE: CaseHistory(NewValue=CarAudit Done) + Car_Audit__c.Car_inspection_by_Vendor__c filled + CarAudit_Amount__c numeric; month=Car_Audit__c.CreatedDate. SQL: scripts/price_structure_snowflake.sql
+const PSTR=[["11/25",56,13,6,9,1,0],["12/25",74,19,10,17,0,0],["1/26",90,17,23,32,0,0],["2/26",120,26,24,30,0,0],["3/26",153,27,23,31,0,0],["4/26",151,27,13,50,0,0],["5/26",136,34,24,64,0,0],["6/26",185,54,49,70,0,1]];
 (function(){
   const B=[{label:'Free CarAudit',c:'#15803d'},{label:'1\u2013100 EUR',c:'#22c55e'},{label:'100\u2013120 EUR',c:'#06b6d4'},{label:'120\u2013125 EUR',c:'#eab308'},{label:'125\u2013145 EUR',c:'#f97316'},{label:'> 145 EUR',c:'#ef4444'}];
   const rows=PSTR.slice().reverse();

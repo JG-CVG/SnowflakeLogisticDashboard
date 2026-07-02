@@ -314,15 +314,9 @@ def main():
     if dr is not None:
         dreg=build_dreg(dr['records'])
         html=replace_const(html,'DREG',json.dumps(dreg,ensure_ascii=False)); did.append('DREG')
-    ps=load('sf_pstr.json')
-    if ps is not None:
-        pstr=build_pstr(ps['records'])
-        tot=sum(sum(r[1:]) for r in pstr)
-        if tot < 800:
-            print(f'WARN PSTR: jen {tot} zaznamu (<800) -> PRESKAKUJI, nepřepisuji')
-        else:
-            html=replace_const(html,'PSTR',json.dumps(pstr,ensure_ascii=False).replace(' ',''))
-            did.append('PSTR')
+    # PSTR (Price structure) MIGROVANO na Snowflake (2.7.2026) -> scripts/price_structure_snowflake.sql
+    # SF build uz PSTR neprepisuje (drive sf_pstr.json). Data se embeduji ze Snowflake jako u ostatnich ❄ grafu.
+    pass
     st=load('sf_suit_total.json'); ss=load('sf_suit_seller.json')
     if st is not None and ss is not None:
         suit=build_suit(ss['records'], st['records'])
